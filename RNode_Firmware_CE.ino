@@ -239,6 +239,23 @@ void setup() {
   // Create and configure interface objects
   for (uint8_t i = 0; i < INTERFACE_COUNT; i++) {
       switch (interfaces[i]) {
+          case LR1121:
+          {
+              lr11xx* obj;
+              // if default spi enabled
+              if (interface_cfg[i][0]) {
+                obj = new lr11xx(i, &SPI, interface_cfg[i][1], interface_cfg[i][2], interface_pins[i][0], interface_pins[i][1],
+                                  interface_pins[i][2], interface_pins[i][3], interface_pins[i][6],
+                                  interface_pins[i][5], interface_pins[i][4], interface_pins[i][8]);
+              } else {
+                obj = new lr11xx(i, &interface_spi[i], interface_cfg[i][1], interface_cfg[i][2], interface_pins[i][0], interface_pins[i][1],
+                                  interface_pins[i][2], interface_pins[i][3], interface_pins[i][6],
+                                  interface_pins[i][5], interface_pins[i][4], interface_pins[i][8]);
+              }
+              interface_obj[i] = obj;
+              interface_obj_sorted[i] = obj;
+              break;
+          }
           case SX1262:
           {
               sx126x* obj;
@@ -317,6 +334,7 @@ void setup() {
     // the configured modems cannot be initialised, do not boot
     for (int i = 0; i < INTERFACE_COUNT; i++) {
         switch (interfaces[i]) {
+            case LR1121:
             case SX1262:
             case SX1276:
             case SX1278:

@@ -241,7 +241,7 @@ public:
             lora_symbols += _preambleLength + 0.25 + 8;
             packet_cost_ms += lora_symbols * _lora_symbol_time_ms;
         }
-        else if (interfaces[_index] == SX1262 || interfaces[_index] == SX1280) {
+        else if (interfaces[_index] == SX1262 || interfaces[_index] == LR1121 || interfaces[_index] == SX1280) {
             if (_sf < 7) {
                 lora_symbols += (8*written + PHY_CRC_LORA_BITS - 4*_sf + PHY_HEADER_LORA_SYMBOLS);
                 lora_symbols /=                              4*_sf;
@@ -788,4 +788,133 @@ private:
   uint8_t _preamble_m;
   uint32_t _last_preamble;
 };
+
+
+// https://github.com/benagricola/RNode_Firmware_LR1121/blob/feature/lr1121/lr11xx.h
+// Copyright 2025
+// Licensed under the MIT license.
+
+class lr11xx : public RadioInterface {
+public:
+  lr11xx(uint8_t index, SPIClass* spi, bool tcxo, bool dio5_6_as_rf_switch, int ss, int sclk, int mosi, int miso, int reset, int dio0, int busy, int rxen);
+
+  int begin();
+  void end();
+
+  int beginPacket(int implicitHeader = false);
+  int endPacket();
+
+  int packetRssi();
+  int packetRssi(uint8_t pkt_snr_raw);
+  int currentRssi();
+  uint8_t packetRssiRaw();
+  uint8_t currentRssiRaw();
+  uint8_t packetSnrRaw();
+  float packetSnr();
+  long packetFrequencyError();
+
+  // from Print
+  virtual size_t write(uint8_t byte);
+  virtual size_t write(const uint8_t *buffer, size_t size);
+
+  // from Stream
+  virtual int available();
+  virtual int read();
+  virtual int peek();
+  virtual void flush();
+
+  void onReceive(void(*callback)(uint8_t, int));
+
+  void receive(int size = 0);
+  void standby();
+  void sleep();
+  void reset(void);
+
+  bool preInit();
+  int8_t getTxPower();
+  void setTxPower(int level, int outputPin = PA_OUTPUT_PA_BOOST_PIN);
+  uint32_t getFrequency();
+  void setFrequency(uint32_t frequency);
+  void setSpreadingFactor(int sf);
+  uint8_t getSpreadingFactor();
+  uint32_t getSignalBandwidth();
+  void setSignalBandwidth(uint32_t sbw);
+  void setCodingRate4(int denominator);
+  uint8_t getCodingRate4();
+  void setPreambleLength(long preamble_symbols);
+  void setSyncWord(uint8_t sw);
+  bool dcd();
+  void enableCrc();
+  void disableCrc();
+  void enableTCXO();
+  void disableTCXO();
+
+  void loraMode();
+  void waitOnBusy();
+
+  // LR11xx SPI layer (2-byte opcodes, two-phase reads)
+  void executeOpcode(uint16_t opcode, uint8_t *buffer, uint8_t size);
+  void executeOpcodeRead(uint16_t opcode, uint8_t *buffer, uint8_t size);
+  void writeBuffer(const uint8_t* buffer, size_t size);
+  void readBuffer(uint8_t* buffer, size_t size);
+  void setPacketParams(long preamble_symbols, uint8_t headermode, uint8_t payload_length, uint8_t crc);
+  void setModulationParams(uint8_t sf, uint8_t bw, uint8_t cr, int ldro);
+  void handleDio0Rise();
+  static void onDio0Rise();
+  bool getPacketValidity();
+  
+  byte random();
+  
+  void setSPIFrequency(uint32_t frequency);
+  
+  void dumpRegisters(Stream& out);
+  
+private:
+  void explicitHeaderMode();
+  void implicitHeaderMode();
+
+  void handleLowDataRate();
+  void calibrate(void);
+  void calibrateImage(long frequency);
+  void configureRfSwitch();
+  void applyHighAcpWorkaround();
+  void setRxBoosted(bool enable);
+  void clearIrqFlags(uint32_t mask);
+
+  // LR11xx register access (32-bit addresses)
+  uint32_t readRegister32(uint32_t address);
+  void writeRegister32(uint32_t address, uint32_t value);
+
+private:
+  SPISettings _spiSettings;
+  SPIClass* _spiModem;
+  int _ss;
+  int _sclk;
+  int _mosi;
+  int _miso;
+  int _reset;
+  int _dio0;      // DIO9 on LR1121 (interrupt pin)
+  int _rxen;
+  bool _tcxo;
+  bool _dio5_6_as_rf_switch;
+  int _busy;      // DIO0 on LR1121 (busy indicator)
+  long _frequency;
+  int _txp;
+  uint8_t _sf;
+  uint8_t _bw;
+  uint8_t _cr;
+  uint8_t _ldro;
+  int _packetIndex;
+  int _preambleLength;
+  int _implicitHeaderMode;
+  int _payloadLength;
+  int _crcMode;
+  int _fifo_rx_addr_ptr;
+  uint8_t _packet[255];
+  bool _preinit_done;
+  uint8_t _lastMiso[6];       // Inline MISO capture from write commands
+  uint32_t _preamble_detected_at;
+  void (*_onReceive)(uint8_t, int);
+};
+
 #endif

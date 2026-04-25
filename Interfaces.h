@@ -4,3 +4,4 @@
 #define SX1262 0x11
 #define SX1268 0x12
 #define SX1280 0x20
+#define LR1121 0x31

@@ -46,6 +46,7 @@
   #define MODEL_A6            0xA6 // T3S3, 868 MHz with SX1262
   #define MODEL_AA            0xAA // T3S3, 868 MHz with SX1276
   #define MODEL_AC            0xAC // T3S3, 2.4 GHz with SX1280 and PA
+  #define MODEL_AD            0xAD // T3S3, 868 Mhz with LR1121
 
   #define PRODUCT_TBEAM       0xE0 // T-Beam devices
   #define BOARD_TBEAM         0x33
@@ -872,6 +873,34 @@
               -1  // pin_tcxo_enable
           }
       };
+      #elif BOARD_VARIANT == MODEL_AD
+      #define HAS_CONSOLE false
+      #define VALIDATE_FIRMWARE false
+      const uint8_t interfaces[INTERFACE_COUNT] = {LR1121};
+      const bool interface_cfg[INTERFACE_COUNT][3] = { 
+                    // LR1121
+          {
+              false, // DEFAULT_SPI
+              true, // HAS_TCXO
+              true  // DIO5_DIO6_AS_RF_SWITCH
+          }, 
+      };
+      const uint8_t interface_pins[INTERFACE_COUNT][10] = { 
+                  // LR1121
+          {
+               7, // pin_ss
+               5, // pin_sclk
+               6, // pin_mosi
+               3, // pin_miso
+              34, // pin_busy
+              36, // pin_dio
+               8, // pin_reset
+              -1, // pin_txen
+              -1, // pin_rxen
+              -1  // pin_tcxo_enable
+          }
+      };
+
       #endif
       
       const int pin_np = 38;
