@@ -15,6 +15,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include "Radio.hpp"
 #include "Utilities.h"
 
 #if MCU_VARIANT == MCU_NRF52
@@ -246,13 +247,13 @@ void setup() {
                 obj = new sx126x(i, &SPI, interface_cfg[i][1],
                 interface_cfg[i][2], interface_pins[i][0], interface_pins[i][1],
                 interface_pins[i][2], interface_pins[i][3], interface_pins[i][6],
-                interface_pins[i][5], interface_pins[i][4], interface_pins[i][8]);
+                interface_pins[i][5], interface_pins[i][4], interface_pins[i][8], interface_pins[i][7]);
               }
               else {
             obj = new sx126x(i, &interface_spi[i], interface_cfg[i][1],
             interface_cfg[i][2], interface_pins[i][0], interface_pins[i][1],
             interface_pins[i][2], interface_pins[i][3], interface_pins[i][6],
-            interface_pins[i][5], interface_pins[i][4], interface_pins[i][8]);
+            interface_pins[i][5], interface_pins[i][4], interface_pins[i][8], interface_pins[i][7]);
               }
             interface_obj[i] = obj;
             interface_obj_sorted[i] = obj;

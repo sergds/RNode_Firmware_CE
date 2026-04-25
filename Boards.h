@@ -129,6 +129,7 @@
   #define BOARD_GENERIC_ESP32 0x35
   #define BOARD_GENERIC_NRF52 0x50
   #define MODEL_FE            0xFE // Homebrew board, max 17dBm output power
+  #define MODEL_FD            0xFD // Homebrew board, Tseryobla3000, ESP32-C3, SX1262
   #define MODEL_FF            0xFF // Homebrew board, max 14dBm output power
 
   // Displays
@@ -187,6 +188,43 @@
       #define HAS_CONSOLE true
       #define HAS_EEPROM true
       #define INTERFACE_COUNT 1
+      #if BOARD_VARIANT == MODEL_FD
+      #define HAS_NP true
+      #define HAS_DISPLAY true
+      #define DISPLAY OLED
+      #define SDA_OLED 5
+      #define SCL_OLED 4
+      #define HAS_BLUETOOTH false
+      #define HAS_BLE true
+      #define VALIDATE_FIRMWARE true
+
+      const int pin_np = 8;
+      const uint8_t interfaces[INTERFACE_COUNT] = {SX1262};
+      const bool interface_cfg[INTERFACE_COUNT][3] = { 
+                    // SX1262
+          {
+              true, // DEFAULT_SPI
+              true, // HAS_TCXO
+              false  // DIO2_AS_RF_SWITCH
+          }
+      };
+      const int8_t interface_pins[INTERFACE_COUNT][10] = { 
+                  // SX1262
+          {
+              10, // pin_ss
+              6, // pin_sclk
+              7, // pin_mosi
+              2, // pin_miso
+              19, // pin_busy
+              3, // pin_dio
+              18, // pin_reset
+              0, // pin_txen
+              1, // pin_rxen
+              -1  // pin_tcxo_enable
+          }
+      };
+
+      #else
       const int pin_led_rx = 14;
       const int pin_led_tx = 32;
       const uint8_t interfaces[INTERFACE_COUNT] = {SX1276};
@@ -213,7 +251,7 @@
               -1  // pin_tcxo_enable
           }
       };
-
+      #endif
     #elif BOARD_MODEL == BOARD_TBEAM
       #define HAS_DISPLAY true
       #define DISPLAY OLED

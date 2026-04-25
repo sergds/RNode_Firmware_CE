@@ -5,11 +5,13 @@
 // Obviously still under the MIT license.
 
 #include "Radio.hpp"
+#include "esp32-hal-gpio.h"
 #include "src/misc/ModemISR.h"
+#include <cstdint>
 
 #if PLATFORM == PLATFORM_ESP32 
   #if defined(ESP32) and !defined(CONFIG_IDF_TARGET_ESP32S3)
-    #include "soc/rtc_wdt.h"
+    #include "rtc_wdt.h"
   #endif
   #define ISR_VECT IRAM_ATTR
 #else
@@ -92,11 +94,11 @@
 extern FIFOBuffer packet_rdy_interfaces;
 extern RadioInterface* interface_obj[];
 
-sx126x::sx126x(uint8_t index, SPIClass* spi, bool tcxo, bool dio2_as_rf_switch, int ss, int sclk, int mosi, int miso, int reset, int dio0, int busy, int rxen) :
+sx126x::sx126x(uint8_t index, SPIClass* spi, bool tcxo, bool dio2_as_rf_switch, int ss, int sclk, int mosi, int miso, int reset, int dio0, int busy, int rxen, int txen) :
   RadioInterface(index),
     _spiSettings(8E6, MSBFIRST, SPI_MODE0), _spiModem(spi), _ss(ss),
     _sclk(sclk), _mosi(mosi), _miso(miso), _reset(reset), _dio0(dio0),
-    _busy(busy), _rxen(rxen), _frequency(0), _bw(0x04),
+    _busy(busy), _rxen(rxen), _txen(txen), _frequency(0), _bw(0x04),
     _cr(0x01), _packetIndex(0), _implicitHeaderMode(0),
     _payloadLength(255), _crcMode(1), _fifo_tx_addr_ptr(0),
     _fifo_rx_addr_ptr(0), _preinit_done(false), _tcxo(tcxo),
@@ -182,6 +184,19 @@ void sx126x::rxAntEnable()
 {
   if (_rxen != -1) {
     digitalWrite(_rxen, HIGH);
+  }
+  if (_txen != -1) {
+    digitalWrite(_txen, LOW);
+  }
+}
+
+void sx126x::txAntEnable()
+{
+  if (_rxen != -1) {
+    digitalWrite(_rxen, LOW);
+  }
+  if (_txen != -1) {
+    digitalWrite(_txen, HIGH);
   }
 }
 
@@ -364,6 +379,7 @@ int sx126x::begin()
   }
 
   if (_rxen != -1) { pinMode(_rxen, OUTPUT); }
+  if (_txen != -1) { pinMode(_txen, OUTPUT); }
 
   calibrate();
   calibrate_image(_frequency);
@@ -438,6 +454,8 @@ int sx126x::beginPacket(int implicitHeader)
 int sx126x::endPacket()
 {
     setPacketParams(_preambleLength, _implicitHeaderMode, _payloadLength, _crcMode);
+
+    txAntEnable();
 
     // put in single TX mode
     uint8_t timeout[3] = {0};
@@ -712,6 +730,8 @@ void sx126x::enableTCXO() {
     #elif BOARD_MODEL == BOARD_HELTEC_T114
       uint8_t buf[4] = {MODE_TCXO_1_8V_6X, 0x00, 0x00, 0xFF};
     #elif BOARD_MODEL == BOARD_E22_ESP32
+      uint8_t buf[4] = {MODE_TCXO_1_8V_6X, 0x00, 0x00, 0xFF};
+    #elif BOARD_MODEL == BOARD_GENERIC_ESP32 || BOARD_VARIANT == MODEL_FD
       uint8_t buf[4] = {MODE_TCXO_1_8V_6X, 0x00, 0x00, 0xFF};
     #else
       uint8_t buf[4] = {0};

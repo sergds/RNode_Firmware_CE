@@ -14,7 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Version 2.0.17 of the Arduino ESP core is based on ESP-IDF v4.4.7
-ARDUINO_ESP_CORE_VER = 2.0.17
+ARDUINO_ESP_CORE_VER = 3.1.0
 
 V ?= 0
 VFLAG =
@@ -142,6 +142,12 @@ firmware-featheresp32: check_bt_buffers
 
 firmware-genericesp32: check_bt_buffers
 	arduino-cli compile --fqbn esp32:esp32:esp32 $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x35\""
+
+firmware-sergdsesp32c3: check_bt_buffers
+	arduino-cli compile --fqbn esp32:esp32:esp32c3 $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x35\" \"-DBOARD_VARIANT=0xFD\""
+
+compile_db-sergdsesp32c3: check_bt_buffers
+	arduino-cli compile --only-compilation-database --build-path "build" --fqbn esp32:esp32:esp32c3 $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x35\" \"-DBOARD_VARIANT=0xFD\""
 
 firmware-rak4631:
 	arduino-cli compile --fqbn rakwireless:nrf52:WisCoreRAK4631Board $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x51\" \"-DBOARD_VARIANT=0x12\""
@@ -277,6 +283,11 @@ upload-techo:
 	arduino-cli upload -p /dev/ttyACM0 --fqbn adafruit:nrf52:pca10056
 	@sleep 6
 	rnodeconf /dev/ttyACM0 --firmware-hash $$(./partition_hashes from_device /dev/ttyACM0)
+
+upload-sergdsesp32c3:
+	arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32c3
+	@sleep 1
+	rnodeconf /dev/ttyUSB0 --firmware-hash $$(./partition_hashes ./build/esp32.esp32.esp32c3/RNode_Firmware_CE.ino.bin)
 
 release:  console-site spiffs-image $(shell grep ^release- Makefile | cut -d: -f1)
 
