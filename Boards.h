@@ -198,6 +198,12 @@
       #define HAS_BLUETOOTH false
       #define HAS_BLE true
       #define VALIDATE_FIRMWARE true
+      #define HAS_INPUT true
+      #define HAS_SLEEP false
+      #define PIN_WAKEUP GPIO_NUM_9
+      #define WAKEUP_LEVEL 0
+
+      const int pin_btn_usr1 = 9;
 
       const int pin_np = 8;
       const uint8_t interfaces[INTERFACE_COUNT] = {SX1262};
