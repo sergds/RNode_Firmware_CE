@@ -82,7 +82,7 @@
   #define CMD_RESET       0x55
   #define CMD_RESET_BYTE  0xF8
 
-  #define CMD_INTERFACES  0x64
+  #define CMD_INTERFACES  0x77
     
   #define CMD_DATA        0x00
 
