@@ -891,7 +891,7 @@
               true  // DIO5_DIO6_AS_RF_SWITCH
           }, 
       };
-      const uint8_t interface_pins[INTERFACE_COUNT][10] = { 
+      const int8_t interface_pins[INTERFACE_COUNT][10] = { 
                   // LR1121
           {
                7, // pin_ss
