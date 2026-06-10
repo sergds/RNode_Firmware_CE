@@ -198,6 +198,10 @@ void device_validate_partitions() {
   #elif MCU_VARIANT == MCU_NRF52
   // todo, add bootloader, partition table, or softdevice?
   calculate_region_hash(APPLICATION_START, APPLICATION_START+retrieve_application_size(), dev_firmware_hash);
+  #elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
+    // RP2XXX TODO: Decide out how we will hash firmware on RP2XXX
+    fw_signature_validated = true;
+    return;
   #endif
     for (uint8_t i = 0; i < DEV_HASH_LEN; i++) {
       if (dev_firmware_hash_target[i] != dev_firmware_hash[i]) {
@@ -211,7 +215,7 @@ bool device_firmware_ok() {
   return fw_signature_validated;
 }
 
-#if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52
+#if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
 bool device_init() {
   #if VALIDATE_FIRMWARE
   if (bt_ready) {

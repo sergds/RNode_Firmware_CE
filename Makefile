@@ -22,7 +22,14 @@ ifeq "$(V)" "1"
 VFLAG =-v
 endif
 
-COMMON_BUILD_FLAGS =  $(VFLAG) -e --build-property "build.partitions=no_ota" --build-property "upload.maximum_size=2097152"
+COMPILE_COMMANDS ?= 0
+DBFLAG =
+ifeq "$(COMPILE_COMMANDS)" "1"
+DBFLAG =--only-compilation-database
+endif
+
+COMMON_RP2XXX_BUILD_FLAGS= --build-property "build.os=-D__FREERTOS"
+COMMON_BUILD_FLAGS =  $(VFLAG) $(DBFLAG) -e --build-property "build.partitions=no_ota" --build-property "upload.maximum_size=2097152"
 COMMON_ESP_UPLOAD_FLAGS = $(VFLAG) --chip esp32 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m --flash_size 4MB 0x210000
 
 all: release
@@ -35,6 +42,15 @@ prep: prep-esp32 prep-nrf
 
 prep-index:
 	arduino-cli core update-index --config-file arduino-cli.yaml
+
+prep-rp2xxx:
+	arduino-cli --config-file arduino-cli.yaml core install rp2040:rp2040
+	arduino-cli lib install "Adafruit SSD1306"
+	arduino-cli lib install "Adafruit SH110X"
+	arduino-cli lib install "Adafruit ST7735 and ST7789 Library"
+	arduino-cli lib install "Adafruit NeoPixel"
+	arduino-cli lib install "XPowersLib"
+	arduino-cli lib install "Crypto"
 
 prep-esp32:
 	arduino-cli core install esp32:esp32@$(ARDUINO_ESP_CORE_VER) --config-file arduino-cli.yaml
@@ -153,7 +169,10 @@ firmware-sergdsesp32c3: check_bt_buffers
 	arduino-cli compile --fqbn esp32:esp32:esp32c3 $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x35\" \"-DBOARD_VARIANT=0xFD\""
 
 compile_db-sergdsesp32c3: check_bt_buffers
-	arduino-cli compile --only-compilation-database --build-path "build" --fqbn esp32:esp32:esp32c3 $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x35\" \"-DBOARD_VARIANT=0xFD\""
+	arduino-cli compile --config-file arduino-cli.yaml --only-compilation-database --build-path "build" --fqbn esp32:esp32:esp32c3 $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x35\" \"-DBOARD_VARIANT=0xFD\""
+
+firmware-pico2:
+	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico2 $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x65\" \"-DBOARD_VARIANT=0xFC\""
 
 firmware-rak4631:
 	arduino-cli compile --fqbn rakwireless:nrf52:WisCoreRAK4631Board $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x51\" \"-DBOARD_VARIANT=0x12\""
@@ -294,6 +313,9 @@ upload-sergdsesp32c3:
 	arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32c3
 	@sleep 1
 	rnodeconf /dev/ttyUSB0 --firmware-hash $$(./partition_hashes ./build/esp32.esp32.esp32c3/RNode_Firmware_CE.ino.bin)
+
+upload-pico2:
+	arduino-cli upload --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico2 --upload-property "upload.tool.default=picotool" -p "/dev"
 
 release:  console-site spiffs-image $(shell grep ^release- Makefile | cut -d: -f1)
 

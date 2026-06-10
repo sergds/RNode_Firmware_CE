@@ -15,15 +15,23 @@
 
 #include "Interfaces.h"
 #include "ROM.h"
+#if defined(ARDUINO_ARCH_RP2040)
+#include "RP2040Support.h"
+#include "hardware/structs/clocks.h"
+#include "pico.h"
+#endif
 
 #ifndef BOARDS_H
   #define BOARDS_H
 
   #define PLATFORM_ESP32      0x80
   #define PLATFORM_NRF52      0x70
+  #define PLATFORM_RP2XXX      0x60
 
   #define MCU_ESP32           0x81
   #define MCU_NRF52           0x71
+  #define MCU_RP2040          0x61
+  #define MCU_RP235X          0x62
 
   // Products, boards and models. Grouped by manufacturer.
   // Below are the original RNodes, sold by Mark Qvist.
@@ -129,6 +137,8 @@
   #define BOARD_HUZZAH32      0x34
   #define BOARD_GENERIC_ESP32 0x35
   #define BOARD_GENERIC_NRF52 0x50
+  #define BOARD_GENERIC_RP2XXX 0x65
+  #define MODEL_FC            0xFC // Homebrew board, Raspbery Pi Pico 2, RP2350, LR1121
   #define MODEL_FE            0xFE // Homebrew board, max 17dBm output power
   #define MODEL_FD            0xFD // Homebrew board, Tseryobla3000, ESP32-C3, SX1262
   #define MODEL_FF            0xFF // Homebrew board, max 14dBm output power
@@ -147,6 +157,15 @@
     #include <variant.h>
     #define PLATFORM PLATFORM_NRF52
     #define MCU_VARIANT MCU_NRF52
+  #elif defined(ARDUINO_ARCH_RP2040)
+    #define PLATFORM PLATFORM_RP2XXX
+    #if PICO_RP2350
+    #define MCU_VARIANT MCU_RP235X
+    #elif PICO_RP2040
+    #define MCU_VARIANT MCU_RP2040
+    #else
+      #error "Unknown RPXXXX MCU!"
+    #endif
   #else
       #error "The firmware cannot be compiled for the selected MCU variant"
   #endif
@@ -1465,6 +1484,56 @@
       #endif
     #else
       #error An unsupported nRF board was selected. Cannot compile RNode firmware.
+    #endif
+  #elif MCU_VARIANT == MCU_RP235X
+    #define CONFIG_UART_BUFFER_SIZE 6144
+    #define CONFIG_QUEUE_0_SIZE 6144
+    #define CONFIG_QUEUE_MAX_LENGTH 200
+   
+    #define EEPROM_SIZE 1024
+    #define EEPROM_OFFSET EEPROM_SIZE-EEPROM_RESERVED
+
+    #define HAS_CONSOLE false
+    #define HAS_BLUETOOTH false
+
+    #define HAS_SLEEP false
+    #define PIN_DISP_SLEEP -1
+    #define VALIDATE_FIRMWARE false
+
+
+    #if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+      #define HAS_INPUT false
+      #define HAS_EEPROM true
+      #define INTERFACE_COUNT 1
+
+
+      const int pin_led_rx = 25;
+      const int pin_led_tx = 25;
+      
+      const uint8_t interfaces[INTERFACE_COUNT] = {LR1121};
+      const bool interface_cfg[INTERFACE_COUNT][3] = { 
+                    // LR1121
+          {
+              false, // DEFAULT_SPI
+              true, // HAS_TCXO
+              true  // DIO5_DIO6_AS_RF_SWITCH
+          }, 
+      };
+      const int8_t interface_pins[INTERFACE_COUNT][10] = { 
+                  // LR1121
+          {
+               5, // pin_ss
+               2, // pin_sclk
+               3, // pin_mosi
+               4, // pin_miso
+              15, // pin_busy
+              16, // pin_dio
+               6, // pin_reset
+              -1, // pin_txen
+              -1, // pin_rxen
+              -1  // pin_tcxo_enable
+          }
+      };
     #endif
 
   #endif

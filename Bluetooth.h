@@ -13,6 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#if HAS_BLUETOOTH == true || PLATFORM == PLATFORM_RP2XXX
+  #error "Currently no bluetooth support on RP2XXX devices"
+#endif
+
 #if MCU_VARIANT == MCU_ESP32
   #if HAS_BLUETOOTH == true
     #include "BluetoothSerial.h"

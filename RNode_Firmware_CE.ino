@@ -15,8 +15,13 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include <sys/_types.h>
 #include "Radio.hpp"
 #include "Utilities.h"
+#if PLATFORM == PLATFORM_RP2XXX
+#include "RP2040Support.h"
+#include <FreeRTOS.h>
+#endif
 
 #if MCU_VARIANT == MCU_NRF52
   #if BOARD_MODEL == BOARD_RAK4631 || BOARD_MODEL == BOARD_OPENCOM_XL
@@ -54,6 +59,17 @@
                )
       };
   #endif
+#elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
+      #if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+      #define INTERFACE_SPI
+      SPIClassRP2040 interface_spi[1] = {
+        SPIClassRP2040(spi0,
+          interface_pins[0][3],
+          interface_pins[0][0],
+          interface_pins[0][1],
+          interface_pins[0][2])
+      };
+      #endif
 #endif
 
 #ifndef INTERFACE_SPI
@@ -122,6 +138,9 @@ void setup() {
       pinMode(DISPLAY_BL_PIN, OUTPUT);
     #endif
 
+  #elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
+    EEPROM.begin(EEPROM_SIZE);
+  
   #elif MCU_VARIANT == MCU_NRF52
     #if BOARD_MODEL == BOARD_TECHO
       delay(200);
@@ -153,6 +172,8 @@ void setup() {
     // On nRF, get the seed value from the
     // hardware RNG
     unsigned long seed_val = get_rng_seed();
+  #elif PLATFORM == PLATFORM_RP2XXX
+    unsigned long seed_val = rp2040.hwrand32();
   #else
     // Otherwise, get a pseudo-random seed
     // value from an unconnected analog pin
@@ -1395,6 +1416,12 @@ void validate_status() {
       uint8_t F_POR = 0x00;
       uint8_t F_BOR = 0x00;
       uint8_t F_WDR = 0x01;
+  #elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
+      uint8_t boot_flags = rp2040.getResetReason();
+      uint8_t F_POR = RP2040::resetReason_t::PWRON_RESET;
+      uint8_t F_BOR = RP2040::resetReason_t::BROWNOUT_RESET;
+      uint8_t F_WDR = RP2040::resetReason_t::WDT_RESET;
+      
   #endif
 
   if (hw_ready || device_init_done) {
@@ -1409,6 +1436,25 @@ void validate_status() {
     led_indicate_boot_error();
   }
 
+  #if MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
+  // RP2XXX uses enumeration instead of bit flags
+  if (boot_flags == F_POR) {
+    boot_vector = START_FROM_POWERON;
+  } else if (boot_flags == F_BOR) {
+    boot_vector = START_FROM_BROWNOUT;
+  } else if (boot_flags == F_WDR) {
+    boot_vector = START_FROM_BOOTLOADER;
+  } else {
+      Serial.write("Error, indeterminate boot vector\r\n");
+      #if HAS_DISPLAY
+        if (disp_ready) {
+          device_init_done = true;
+          update_display();
+        }
+      #endif
+      led_indicate_boot_error();
+  }
+  #else
   if (boot_flags & (1<<F_POR)) {
     boot_vector = START_FROM_POWERON;
   } else if (boot_flags & (1<<F_BOR)) {
@@ -1425,6 +1471,7 @@ void validate_status() {
       #endif
       led_indicate_boot_error();
   }
+  #endif
 
   if (boot_vector == START_FROM_BOOTLOADER || boot_vector == START_FROM_POWERON) {
     if (eeprom_lock_set()) {
@@ -1554,6 +1601,22 @@ void loop() {
         kiss_indicate_stat_snr(interface_obj[packet_interface]);
         kiss_write_packet(packet_interface);
       }
+
+    #elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
+      modem_packet_t *modem_packet = NULL;
+      if(modem_packet_queue && xQueueReceive(modem_packet_queue, &modem_packet, 0) == pdTRUE && modem_packet) {
+        uint8_t packet_interface = modem_packet->interface;
+        read_len[packet_interface] = modem_packet->len;
+        last_rssi = modem_packet->rssi;
+        last_snr_raw = modem_packet->snr_raw;
+        memcpy(&pbuf, modem_packet->data, modem_packet->len);
+        free(modem_packet);
+        modem_packet = NULL;
+
+        kiss_indicate_stat_rssi(interface_obj[packet_interface]);
+        kiss_indicate_stat_snr(interface_obj[packet_interface]);
+        kiss_write_packet(packet_interface);
+      }
     #endif
 
     bool ready = false;
@@ -1648,6 +1711,12 @@ void loop() {
   if (memory_low) {
     #if PLATFORM == PLATFORM_ESP32
       if (esp_get_free_heap_size() < 8192) {
+        kiss_indicate_error(ERROR_MEMORY_LOW); memory_low = false;
+      } else {
+        memory_low = false;
+      }
+    #elif PLATFORM == PLATFORM_RP2XXX
+      if (rp2040.getFreeHeap() < 8192) {
         kiss_indicate_error(ERROR_MEMORY_LOW); memory_low = false;
       } else {
         memory_low = false;
