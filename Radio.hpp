@@ -269,7 +269,7 @@ public:
     void updateModemStatus() {
       #if MCU_VARIANT == MCU_ESP32
         portENTER_CRITICAL(&update_lock);
-      #elif MCU_VARIANT == MCU_NRF52
+      #elif MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
         portENTER_CRITICAL();
       #endif
 
@@ -279,7 +279,7 @@ public:
 
       #if MCU_VARIANT == MCU_ESP32
         portEXIT_CRITICAL(&update_lock);
-      #elif MCU_VARIANT == MCU_NRF52
+      #elif MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
         portEXIT_CRITICAL();
       #endif
 

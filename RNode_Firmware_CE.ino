@@ -197,7 +197,7 @@ void setup() {
     led_init();
   #endif
 
-  #if MCU_VARIANT == MCU_NRF52 && HAS_NP == true
+  #if MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040 && HAS_NP == true
     boot_seq();
   #endif
 
@@ -484,7 +484,7 @@ inline void kiss_write_packet(int index) {
   serial_write(CMD_DATA);
 
   for (uint16_t i = 0; i < read_len[index]; i++) {
-    #if MCU_VARIANT == MCU_NRF52
+    #if MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
       portENTER_CRITICAL();
       uint8_t byte = pbuf[i];
       portEXIT_CRITICAL();
@@ -507,7 +507,7 @@ inline void kiss_write_packet(int index) {
 
 inline void getPacketData(RadioInterface* radio, uint16_t len) {
     uint8_t index = radio->getIndex();
-  #if MCU_VARIANT != MCU_NRF52
+  #if MCU_VARIANT != MCU_NRF52 && MCU_VARIANT != MCU_RP235X && MCU_VARIANT != MCU_RP2040
     while (len-- && read_len[index] < MTU) {
       pbuf[read_len[index]++] = radio->read();
     }  
@@ -565,7 +565,7 @@ void ISR_VECT receive_callback(uint8_t index, int packet_size) {
       // This is the first part of a split
       // packet, so we set the seq variable
       // and add the data to the buffer
-      #if MCU_VARIANT == MCU_NRF52
+      #if MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
         int_mask = taskENTER_CRITICAL_FROM_ISR(); read_len[index] = 0; taskEXIT_CRITICAL_FROM_ISR(int_mask);
       #else
         read_len[index] = 0;
@@ -590,7 +590,7 @@ void ISR_VECT receive_callback(uint8_t index, int packet_size) {
       // same sequence id, so we must assume
       // that we are seeing the first part of
       // a new split packet.
-      #if MCU_VARIANT == MCU_NRF52
+      #if MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
         int_mask = taskENTER_CRITICAL_FROM_ISR(); read_len[index] = 0; taskEXIT_CRITICAL_FROM_ISR(int_mask);
       #else
         read_len[index] = 0;
@@ -607,7 +607,7 @@ void ISR_VECT receive_callback(uint8_t index, int packet_size) {
       if (seq[index] != SEQ_UNSET) {
         // If we already had part of a split
         // packet in the buffer, we clear it.
-        #if MCU_VARIANT == MCU_NRF52
+        #if MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
           int_mask = taskENTER_CRITICAL_FROM_ISR(); read_len[index] = 0; taskEXIT_CRITICAL_FROM_ISR(int_mask);
         #else
           read_len[index] = 0;
