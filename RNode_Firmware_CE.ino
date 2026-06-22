@@ -201,7 +201,7 @@ void setup() {
     boot_seq();
   #endif
 
-  #if BOARD_MODEL != BOARD_RAK4631 && BOARD_MODEL != BOARD_HELTEC_T114 && BOARD_MODEL != BOARD_TECHO && BOARD_MODEL != BOARD_T3S3 && BOARD_MODEL != BOARD_TBEAM_S_V1 && BOARD_MODEL != BOARD_OPENCOM_XL
+  #if BOARD_MODEL != BOARD_RAK4631 && BOARD_MODEL != BOARD_HELTEC_T114 && BOARD_MODEL != BOARD_TECHO && BOARD_MODEL != BOARD_T3S3 && BOARD_MODEL != BOARD_TBEAM_S_V1 && BOARD_MODEL != BOARD_OPENCOM_XL && BOARD_MODEL != BOARD_GENERIC_RP2XXX
   // Some boards need to wait until the hardware UART is set up before booting
   // the full firmware. In the case of the RAK4631/TECHO, the line below will wait
   // until a serial connection is actually established with a master. Thus, it
@@ -1421,6 +1421,12 @@ void validate_status() {
       uint8_t F_POR = RP2040::resetReason_t::PWRON_RESET;
       uint8_t F_BOR = RP2040::resetReason_t::BROWNOUT_RESET;
       uint8_t F_WDR = RP2040::resetReason_t::WDT_RESET;
+      // RP2 Specific
+      uint8_t F_UNK = RP2040::resetReason_t::UNKNOWN_RESET;
+      uint8_t F_RUN = RP2040::resetReason_t::RUN_PIN_RESET;
+      uint8_t F_RST = RP2040::resetReason_t::SOFT_RESET;
+      uint8_t F_DBG = RP2040::resetReason_t::DEBUG_RESET;
+      uint8_t F_GLT = RP2040::resetReason_t::GLITCH_RESET;
       
   #endif
 
@@ -1438,12 +1444,14 @@ void validate_status() {
 
   #if MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
   // RP2XXX uses enumeration instead of bit flags
-  if (boot_flags == F_POR) {
+  if (boot_flags == F_POR || boot_flags == F_UNK) {
     boot_vector = START_FROM_POWERON;
-  } else if (boot_flags == F_BOR) {
+  } else if (boot_flags == F_BOR || boot_flags == F_GLT) {
     boot_vector = START_FROM_BROWNOUT;
-  } else if (boot_flags == F_WDR) {
+  } else if (boot_flags == F_WDR || boot_flags == F_RST || boot_flags == F_RUN) {
     boot_vector = START_FROM_BOOTLOADER;
+  } else if (boot_flags == F_DBG) {
+    boot_vector = START_FROM_JTAG;
   } else {
       Serial.write("Error, indeterminate boot vector\r\n");
       #if HAS_DISPLAY
