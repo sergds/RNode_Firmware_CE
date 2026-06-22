@@ -141,6 +141,10 @@ void busyCallback(const void* p) { display_callback(); }
   #define DISP_CUSTOM_ADDR true
 #endif
 
+#if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+  TwoWire OLEDWire(RP2XXX_I2C, SDA_OLED, SCL_OLED);
+#endif
+
 #define SMALL_FONT &Org_01
 
 #include "Graphics.h"
@@ -167,7 +171,11 @@ uint32_t last_epd_full_refresh = 0;
 #define REFRESH_PERIOD 300000 // 5 minutes in ms
 #else
   #if DISPLAY == OLED
+  #if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+    Adafruit_SSD1306 display(DISP_W, DISP_H, &OLEDWire, DISP_RST);
+  #else
     Adafruit_SSD1306 display(DISP_W, DISP_H, &Wire, DISP_RST);
+  #endif
   #elif BOARD_MODEL == BOARD_TDECK
     Adafruit_ST7789 display = Adafruit_ST7789(DISPLAY_CS, DISPLAY_DC, -1);
   #elif BOARD_MODEL == BOARD_TBEAM_S_V1
@@ -381,6 +389,8 @@ bool display_init() {
       Wire.begin(SDA_OLED, SCL_OLED);
     #elif BOARD_VARIANT == MODEL_FD && BOARD_MODEL == BOARD_GENERIC_ESP32
       Wire.begin(SDA_OLED, SCL_OLED);
+    #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
+      OLEDWire.begin();
     #endif
 
     #if HAS_EEPROM
@@ -734,6 +744,9 @@ void draw_quality_bars(int px, int py) {
 #if MODEM == SX1280
   #define S_RSSI_MIN -105.0
   #define S_RSSI_MAX -65.0
+#elif MODEM == LR1121
+  #define S_RSSI_MIN -144.0
+  #define S_RSSI_MAX -75.0
 #else
   #define S_RSSI_MIN -135.0
   #define S_RSSI_MAX -75.0
@@ -845,7 +858,9 @@ void draw_stat_area() {
     }
 
     draw_cable_icon(3, 8);
+    #if HAS_BLUETOOTH == 1
     draw_bt_icon(3, 30);
+    #endif
     draw_lora_icon(interface_obj[0], 45, 8);
 
     // todo, expand support to show more than two interfaces on screen
@@ -976,8 +991,12 @@ void draw_disp_area() {
         disp_area.fillRect(0,0,disp_area.width(),8,DISPLAY_WHITE);
 
         // display device ID on top bar
+        #if HAS_BLUETOOTH == 1
         disp_area.setCursor(4, 5); disp_area.print(bt_devname);
-
+        #else
+        // Most RP2 boards don't have bluetooth as it usually is implemented by a separate radio module. -sergds
+        disp_area.setCursor(4, 5); disp_area.print("RNode");
+        #endif
       } else {
         if (device_signatures_ok()) {
           disp_area.drawBitmap(0, 0, bm_def_lc, disp_area.width(), 37, DISPLAY_WHITE, DISPLAY_BLACK);      
@@ -986,8 +1005,10 @@ void draw_disp_area() {
         }
 
         // display device ID beneath header
+        #if HAS_BLUETOOTH == 1
         disp_area.setFont(SMALL_FONT); disp_area.setTextWrap(false); disp_area.setCursor(13, 32); disp_area.setTextColor(DISPLAY_WHITE); disp_area.setTextSize(2);
         disp_area.printf("%02X%02X", bt_dh[14], bt_dh[15]);
+        #endif
       }
 
       if (!hw_ready || !device_firmware_ok()) {

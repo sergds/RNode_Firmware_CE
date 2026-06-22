@@ -15,10 +15,10 @@
 
 #include "Interfaces.h"
 #include "ROM.h"
+
 #if defined(ARDUINO_ARCH_RP2040)
 #include "RP2040Support.h"
-#include "hardware/structs/clocks.h"
-#include "pico.h"
+#include "hardware/i2c.h"
 #endif
 
 #ifndef BOARDS_H
@@ -1505,6 +1505,11 @@
       #define HAS_INPUT false
       #define HAS_EEPROM true
       #define INTERFACE_COUNT 1
+      #define HAS_DISPLAY true
+      #define DISPLAY OLED
+      #define SDA_OLED 18
+      #define SCL_OLED 19
+      #define RP2XXX_I2C i2c1
 
 
       const int pin_led_rx = 25;
