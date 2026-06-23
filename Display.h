@@ -14,6 +14,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <Adafruit_GFX.h>
+#include <cstdio>
+#include <cstring>
+
+#if PLATFORM == PLATFORM_RP2XXX
+#include <pico/unique_id.h>
+#endif
 
 #define DISP_W 128
 #define DISP_H 64
@@ -326,6 +332,12 @@ uint8_t display_contrast = 0x00;
   }
 #endif
 
+// TODO: Delete this after bluetooth is implemented on RP2 -sergds
+#if !HAS_BLUETOOTH
+char bt_devname[11];
+char bt_dh[16];
+#endif
+
 bool display_init() {
   #if HAS_DISPLAY
     #if BOARD_MODEL == BOARD_RNODE_NG_20 || BOARD_MODEL == BOARD_LORA32_V2_0
@@ -391,6 +403,11 @@ bool display_init() {
       Wire.begin(SDA_OLED, SCL_OLED);
     #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
       OLEDWire.begin();
+      // TODO: Delete me and following code after bluetooth is implemented on RP2 -sergds
+      pico_unique_board_id_t pico_id;
+      pico_get_unique_board_id(&pico_id);
+      memcpy(bt_dh+PICO_UNIQUE_BOARD_ID_SIZE_BYTES, pico_id.id, PICO_UNIQUE_BOARD_ID_SIZE_BYTES);
+      sprintf(bt_devname, "RNode %02X%02X", bt_dh[14], bt_dh[15]);
     #endif
 
     #if HAS_EEPROM
@@ -991,12 +1008,7 @@ void draw_disp_area() {
         disp_area.fillRect(0,0,disp_area.width(),8,DISPLAY_WHITE);
 
         // display device ID on top bar
-        #if HAS_BLUETOOTH == 1
         disp_area.setCursor(4, 5); disp_area.print(bt_devname);
-        #else
-        // Most RP2 boards don't have bluetooth as it usually is implemented by a separate radio module. -sergds
-        disp_area.setCursor(4, 5); disp_area.print("RNode");
-        #endif
       } else {
         if (device_signatures_ok()) {
           disp_area.drawBitmap(0, 0, bm_def_lc, disp_area.width(), 37, DISPLAY_WHITE, DISPLAY_BLACK);      
@@ -1005,10 +1017,8 @@ void draw_disp_area() {
         }
 
         // display device ID beneath header
-        #if HAS_BLUETOOTH == 1
         disp_area.setFont(SMALL_FONT); disp_area.setTextWrap(false); disp_area.setCursor(13, 32); disp_area.setTextColor(DISPLAY_WHITE); disp_area.setTextSize(2);
         disp_area.printf("%02X%02X", bt_dh[14], bt_dh[15]);
-        #endif
       }
 
       if (!hw_ready || !device_firmware_ok()) {
