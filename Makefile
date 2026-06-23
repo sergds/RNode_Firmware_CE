@@ -28,7 +28,7 @@ ifeq "$(COMPILE_COMMANDS)" "1"
 DBFLAG =--only-compilation-database
 endif
 
-COMMON_RP2XXX_BUILD_FLAGS= --build-property "build.os=-D__FREERTOS" --build-property "build.f_cpu=133000000L" --build-property "build.usb_manufacturer=\"SergDS\"" --build-property "build.usb_product=\"LR1121 RNode\""
+COMMON_RP2XXX_BUILD_FLAGS= --build-property "build.os=-D__FREERTOS"
 COMMON_BUILD_FLAGS =  $(VFLAG) $(DBFLAG) -e --build-property "build.partitions=no_ota" --build-property "upload.maximum_size=2097152"
 COMMON_ESP_UPLOAD_FLAGS = $(VFLAG) --chip esp32 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m --flash_size 4MB 0x210000
 
@@ -172,7 +172,7 @@ compile_db-sergdsesp32c3: check_bt_buffers
 	arduino-cli compile --config-file arduino-cli.yaml --only-compilation-database --build-path "build" --fqbn esp32:esp32:esp32c3 $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x35\" \"-DBOARD_VARIANT=0xFD\""
 
 firmware-pico2:
-	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico2 $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x65\" \"-DBOARD_VARIANT=0xFC\""
+	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico2 $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "build.f_cpu=133000000L" --build-property "build.usb_product=\"Pico2 RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x65\" \"-DBOARD_VARIANT=0xFC\""
 
 firmware-rak4631:
 	arduino-cli compile --fqbn rakwireless:nrf52:WisCoreRAK4631Board $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x51\" \"-DBOARD_VARIANT=0x12\""
