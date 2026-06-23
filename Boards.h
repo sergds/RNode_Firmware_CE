@@ -1510,7 +1510,11 @@
       #define SDA_OLED 18
       #define SCL_OLED 19
       #define RP2XXX_I2C i2c1
+      #define HAS_SLEEP true
+      #define PIN_WAKEUP 12
+      #define HAS_INPUT true
 
+      const int pin_btn_usr1 = 12;
 
       const int pin_led_rx = 25;
       const int pin_led_tx = 25;

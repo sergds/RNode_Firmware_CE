@@ -21,7 +21,13 @@
 
 #if PLATFORM == PLATFORM_RP2XXX
 #include "RP2040Support.h"
+#include "USB.h"
 #include <FreeRTOS.h>
+#include "hardware/gpio.h"
+#include "hardware/xosc.h"
+#include "hardware/clocks.h"
+#include "hardware/pll.h"
+#include "pico/runtime_init.h"
 #include "pico/bootrom.h"
 #endif
 
@@ -1764,6 +1770,52 @@ void sleep_now() {
       #endif
       esp_sleep_enable_ext0_wakeup(PIN_WAKEUP, WAKEUP_LEVEL);
       esp_deep_sleep_start();
+    #elif PLATFORM == PLATFORM_RP2XXX
+      #if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+        update_display(true);
+      #endif
+      #if PIN_DISP_SLEEP >= 0
+        pinMode(PIN_DISP_SLEEP, OUTPUT);
+        digitalWrite(PIN_DISP_SLEEP, DISP_SLEEP_LEVEL);
+      #endif
+      // TODO -sergds
+      #if 0 // HAS_BLUETOOTH
+        if (bt_state == BT_STATE_CONNECTED) {
+          bt_stop();
+          delay(100);
+        }
+      #endif
+      gpio_init(PIN_WAKEUP);
+      gpio_set_input_enabled(PIN_WAKEUP, true);
+      gpio_set_pulls(PIN_WAKEUP, true, false);
+      gpio_set_dormant_irq_enabled(PIN_WAKEUP, GPIO_IRQ_EDGE_FALL, true);
+      Serial.end();
+      // TODO: Determine if this is really necessary. -sergds
+      // Switch clock to pure XOSC and shutdown PLLs to prevent losing lock (RP2350 Datasheet p. 490)
+      clock_configure(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ, XOSC_HZ);
+      clock_configure(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, XOSC_HZ, XOSC_HZ);
+      clock_configure(clk_peri, 0, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, XOSC_HZ, XOSC_HZ);
+      clock_stop(clk_adc);
+      clock_stop(clk_usb);
+      #if MCU_VARIANT == MCU_RP235X
+      clock_stop(clk_hstx);
+      #endif
+      #if MCU_VARIANT == MCU_RP2040
+      clock_stop(clk_rtc);
+      #endif
+      pll_deinit(pll_sys);
+      pll_deinit(pll_usb);
+      USB.disconnect();
+
+      xosc_dormant();
+
+      gpio_acknowledge_irq(PIN_WAKEUP, GPIO_IRQ_EDGE_FALL);
+      runtime_init_clocks();
+      set_sys_clock_khz(F_CPU / 1000, true);
+      USB.connect();
+      Serial.begin();
+      update_display();
+      
     #elif PLATFORM == PLATFORM_NRF52
       #if BOARD_MODEL == BOARD_HELTEC_T114
         npset(0,0,0);
