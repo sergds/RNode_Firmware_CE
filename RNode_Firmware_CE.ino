@@ -18,9 +18,11 @@
 #include <sys/_types.h>
 #include "Radio.hpp"
 #include "Utilities.h"
+
 #if PLATFORM == PLATFORM_RP2XXX
 #include "RP2040Support.h"
 #include <FreeRTOS.h>
+#include "pico/bootrom.h"
 #endif
 
 #if MCU_VARIANT == MCU_NRF52
@@ -1793,6 +1795,9 @@ void button_event(uint8_t event, unsigned long duration) {
           #endif
           console_active = true;
           console_start();
+        #elif PLATFORM == PLATFORM_RP2XXX
+          update_display(true);
+          rom_reset_usb_boot(0, 0);
         #endif
       } else if (duration > 5000) {
         #if HAS_BLUETOOTH || HAS_BLE
