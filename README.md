@@ -1,3 +1,43 @@
+# Raspberry Pi RP MCU port
+Experimental port for pico chip family based on my personal branch with adapted LR1121 driver by Ben Agricola + subjective changes.
+
+## Implemented boards:
+### BOARD_GENERIC_RP2XXX (Generic RP2XXX Board)
+A generic Pico2-based build. 1 radio interface, LR1121 modem. i2c1 is dedicated to OLED.
+
+Pinout:
+
+| Pin                        | GPIO Number |
+| -------------------------- | ----------- |
+| SDA_OLED                   | 18          |
+| SCL_OLED                   | 19          |
+| PIN_WAKEUP + pin_btn_usr1  | 12          |
+| pin_led_rx + pin_led_tx    | 25          |
+| LR1121 Slave Select (SS)   | 5           |
+| LR1121 Serial Clock (SCLK) | 2           |
+| LR1121 Master Out (MOSI)   | 3           |
+| LR1121 Master In (MISO)    | 4           |
+| LR1121 DIO0 (BUSY)         | 15          |
+| LR1121 DIO1 (IRQ)          | 16          |
+| LR1121 NRESET              | 6           |
+
+LoRA module is Waveshare Core1121-HF.
+
+## Current RP-specific differences from upstream:
+- Device ID is pico unique ID (OTP CHIPID on RP235X, Flash UID on RP2040) instead of bluetooth MAC + sig hash.
+- 10 Second button push resets device into usb boot (BOOTSEL) mode instead of weird esp-specific console thingy.
+
+## Current chip support:
+- RP235X: Works, tested
+- RP2040: Theoretical, untested
+
+## Working features (RP2350):
+- [X] Boots up, radio interface works
+- [X] Display, input
+- [X] Sleep mode (implemented via DORMANT mode)
+- [ ] Device validation (firmware validation via hashing)
+- [ ] Bluetooth (Pico W, Boards with RM2)
+
 # RNode Firmware - Community Edition
 
 This is the community maintained fork of the open firmware which powers RNode devices. It has been created to continue to expand development and support for more hardware devices, as the upstream repository is no longer accepting PRs for new hardware support. The original repository by Mark Qvist can be found [here](https://github.com/markqvist/RNode_Firmware).
@@ -28,26 +68,26 @@ You must have at least version `2.1.3` of `rnodeconf` installed to update your R
 ## Supported products and boards
 
 ### Products
-| Name | Manufacturer | Link | Transceiver | MCU | Description |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| Handheld v2.x RNodes | [Mark Qvist](https://unsigned.io) | [Buy here](https://unsigned.io/shop/product/handheld-rnode) | SX1276 | ESP32 |
-| openCom XL | [Liberated Embedded Systems](https://liberatedsystems.co.uk) | [Buy here](https://store.liberatedsystems.co.uk/product/opencom-xl/) | SX1262 & SX1280 | nRF52 | Supports utilisation of both modems at once |
+|         Name         |                         Manufacturer                         |                                 Link                                 |   Transceiver   |  MCU  |                 Description                 |
+| :------------------: | :----------------------------------------------------------: | :------------------------------------------------------------------: | :-------------: | :---: | :-----------------------------------------: |
+| Handheld v2.x RNodes |              [Mark Qvist](https://unsigned.io)               |     [Buy here](https://unsigned.io/shop/product/handheld-rnode)      |     SX1276      | ESP32 |
+|      openCom XL      | [Liberated Embedded Systems](https://liberatedsystems.co.uk) | [Buy here](https://store.liberatedsystems.co.uk/product/opencom-xl/) | SX1262 & SX1280 | nRF52 | Supports utilisation of both modems at once |
 
 ### Homebrew devices
-| Board name | Link | Transceiver | MCU | Description | 
-| :--- | :---: | :---: | :---: | :---: |
-| RAK4631 | [Buy here](https://store.rakwireless.com/products/rak4631-lpwan-node?m=5&h=wisblock-core) | SX1262 | nRF52 |
-| LilyGO T-BEAM v1.1 | [Buy here](https://www.lilygo.cc/products/t-beam-v1-1-esp32-lora-module) | SX1276/8 or SX1262 | ESP32 |
-| LilyGO T-Beam Supreme | [Buy here](https://lilygo.cc/products/t-beam-supreme) | SX1262 | ESP32-S3 | 
-| LilyGO LoRa32 v1.0 | [Buy here](https://www.lilygo.cc/products/lora32-v1-0) | SX1276/8 | ESP32 |
-| LilyGO LoRa32 v2.0 | No link | SX1276/8 | ESP32 | Discontinued? |
-| LilyGO LoRa32 v2.1 |  [Buy here](https://www.lilygo.cc/products/lora3) | SX1276/8 | ESP32 | With and without TCXO |
-| Heltec LoRa32 v2 | No link | SX1276/8 | ESP32 | Discontinued? |
-| Heltec LoRa32 v3 | [Buy here](https://heltec.org/project/wifi-lora-32-v3/) | SX1262 | ESP32 | 
-| LilyGo T3S3 v1.0 | [Buy here](https://lilygo.cc/products/t3s3-v1-0) | SX1262 or SX1276 or SX1280 | ESP32-S3 |
-| LilyGo T-Echo | [Buy here](https://lilygo.cc/products/t-echo-lilygo) | SX1262 | nRF52 |
-| Heltec T114 | [Buy here](https://heltec.org/project/mesh-node-t114/) | SX1262 | nRF52 | 
-| Homebrew ESP32 boards | | Any supported | ESP32 | This can be any board with an Adafruit Feather (or generic) ESP32 chip |
+| Board name            |                                           Link                                            |        Transceiver         |   MCU    |                              Description                               |
+| :-------------------- | :---------------------------------------------------------------------------------------: | :------------------------: | :------: | :--------------------------------------------------------------------: |
+| RAK4631               | [Buy here](https://store.rakwireless.com/products/rak4631-lpwan-node?m=5&h=wisblock-core) |           SX1262           |  nRF52   |
+| LilyGO T-BEAM v1.1    |         [Buy here](https://www.lilygo.cc/products/t-beam-v1-1-esp32-lora-module)          |     SX1276/8 or SX1262     |  ESP32   |
+| LilyGO T-Beam Supreme |                   [Buy here](https://lilygo.cc/products/t-beam-supreme)                   |           SX1262           | ESP32-S3 |
+| LilyGO LoRa32 v1.0    |                  [Buy here](https://www.lilygo.cc/products/lora32-v1-0)                   |          SX1276/8          |  ESP32   |
+| LilyGO LoRa32 v2.0    |                                          No link                                          |          SX1276/8          |  ESP32   |                             Discontinued?                              |
+| LilyGO LoRa32 v2.1    |                     [Buy here](https://www.lilygo.cc/products/lora3)                      |          SX1276/8          |  ESP32   |                         With and without TCXO                          |
+| Heltec LoRa32 v2      |                                          No link                                          |          SX1276/8          |  ESP32   |                             Discontinued?                              |
+| Heltec LoRa32 v3      |                  [Buy here](https://heltec.org/project/wifi-lora-32-v3/)                  |           SX1262           |  ESP32   |
+| LilyGo T3S3 v1.0      |                     [Buy here](https://lilygo.cc/products/t3s3-v1-0)                      | SX1262 or SX1276 or SX1280 | ESP32-S3 |
+| LilyGo T-Echo         |                   [Buy here](https://lilygo.cc/products/t-echo-lilygo)                    |           SX1262           |  nRF52   |
+| Heltec T114           |                  [Buy here](https://heltec.org/project/mesh-node-t114/)                   |           SX1262           |  nRF52   |
+| Homebrew ESP32 boards |                                                                                           |       Any supported        |  ESP32   | This can be any board with an Adafruit Feather (or generic) ESP32 chip |
 
 It's easy to create your own RNodes from one of the supported development boards and devices. If a device or board you want to use is not yet supported, you are welcome to [join the effort](Documentation/CONTRIBUTING.md) and help create a board definition and pin mapping for it!
 
