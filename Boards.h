@@ -1498,7 +1498,7 @@
 
     #define HAS_SLEEP false
     #define PIN_DISP_SLEEP -1
-    #define VALIDATE_FIRMWARE false
+    #define VALIDATE_FIRMWARE true
 
 
     #if BOARD_MODEL == BOARD_GENERIC_RP2XXX

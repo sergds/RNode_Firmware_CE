@@ -35,7 +35,7 @@ LoRA module is Waveshare Core1121-HF.
 - [X] Boots up, radio interface works
 - [X] Display, input
 - [X] Sleep mode (implemented via DORMANT mode)
-- [ ] Device validation (firmware validation via hashing)
+- [X] Device validation (firmware validation via hashing)
 - [ ] Bluetooth (Pico W, Boards with RM2)
 
 # RNode Firmware - Community Edition

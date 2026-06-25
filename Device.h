@@ -14,6 +14,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <Ed25519.h>
+#include <stdint.h>
+#include <string.h>
 
 #if MCU_VARIANT == MCU_ESP32
 #include "mbedtls/md.h"
@@ -40,6 +42,13 @@
 #define IMG_SIZE_START 0xFF008
 #endif
 
+#elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
+#define CHUNK_SIZE 256
+#include <pico/error.h>
+#include <pico/sha256.h>
+#if MCU_VARIANT == MCU_RP2040
+#include <SHA256.h>
+#endif
 #endif
 
 // Forward declaration from Utilities.h
@@ -199,9 +208,47 @@ void device_validate_partitions() {
   // todo, add bootloader, partition table, or softdevice?
   calculate_region_hash(APPLICATION_START, APPLICATION_START+retrieve_application_size(), dev_firmware_hash);
   #elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
-    // RP2XXX TODO: Decide out how we will hash firmware on RP2XXX
-    fw_signature_validated = true;
-    return;
+  extern char __flash_binary_end;
+  uintptr_t real_binary_end = (uintptr_t)&__flash_binary_end;
+  uint8_t chunk[CHUNK_SIZE] = {0};
+  uint16_t size = 0;
+  #if MCU_VARIANT == MCU_RP2040
+  SHA256 sha;
+  const uint8_t* flash = (const uint8_t*)XIP_BASE;
+  #else
+  pico_sha256_state_t state;
+  if (pico_sha256_try_start(&state, SHA256_BIG_ENDIAN, true) != PICO_OK) {return;};
+  const uint8_t* flash = (const uint8_t*)XIP_NOCACHE_NOALLOC_NOTRANSLATE_BASE;
+  real_binary_end += 0x0c000000; // compensate for different base address
+  #endif
+  // Serial.printf("__flash_binary_end = %p\r\n", &__flash_binary_end);
+  // Serial.printf("real_binary_end = %p\r\n", real_binary_end);
+  // Serial.printf("flash = %p\r\n", flash);
+  while ((uintptr_t)flash < real_binary_end) {
+    if ((uintptr_t)flash + CHUNK_SIZE >= real_binary_end)
+      size = real_binary_end - (uintptr_t)flash;
+    else
+      size = CHUNK_SIZE;
+    // Serial.printf("flash = %p, size = %i\r\n", flash, size);
+    
+    memcpy(chunk, flash, size);
+
+    #if MCU_VARIANT == MCU_RP2040
+      sha.update(chunk, size);
+    #else
+      pico_sha256_update(&state, chunk, size);
+    #endif
+
+    flash += (uintptr_t)size;
+  }
+  #if MCU_VARIANT == MCU_RP2040
+    sha.finalize(dev_firmware_hash, DEV_HASH_LEN);
+  #else
+    sha256_result_t res;
+    pico_sha256_finish(&state, &res);
+    memcpy(dev_firmware_hash, res.bytes, DEV_HASH_LEN);
+  #endif
+  
   #endif
     for (uint8_t i = 0; i < DEV_HASH_LEN; i++) {
       if (dev_firmware_hash_target[i] != dev_firmware_hash[i]) {
@@ -218,7 +265,12 @@ bool device_firmware_ok() {
 #if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
 bool device_init() {
   #if VALIDATE_FIRMWARE
+  #if MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
+  // TODO: check this when bluetooth is implemented -sergds
+  if (1) {
+  #else
   if (bt_ready) {
+  #endif
     #if MCU_VARIANT == MCU_ESP32
     for (uint8_t i=0; i<EEPROM_SIG_LEN; i++){dev_eeprom_signature[i]=EEPROM.read(eeprom_addr(ADDR_SIGNATURE+i));}
     mbedtls_md_context_t ctx;
@@ -252,6 +304,31 @@ bool device_init() {
     hash.update(dev_eeprom_signature, EEPROM_SIG_LEN);
 
     hash.end(dev_hash);
+
+    #elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
+    for (uint8_t i=0; i<EEPROM_SIG_LEN; i++){dev_eeprom_signature[i]=EEPROM.read(eeprom_addr(ADDR_SIGNATURE+i));}
+    #if MCU_VARIANT == MCU_RP235X
+    pico_sha256_state_t state;
+    if(pico_sha256_try_start(&state, SHA256_BIG_ENDIAN, true) == PICO_OK) {
+      sha256_result_t res;
+      #if HAS_BLUETOOTH
+      pico_sha256_update(&state, dev_bt_mac, BT_DEV_ADDR_LEN);
+      #endif
+      pico_sha256_update(&state, dev_eeprom_signature, EEPROM_SIG_LEN);
+      pico_sha256_finish(&state, &res);
+      memcpy(dev_hash, res.bytes, DEV_HASH_LEN);
+    } else {
+      return false;
+    }
+    #elif MCU_VARIANT == MCU_RP2040
+    SHA256 sha;
+    #if HAS_BLUETOOTH 
+      sha.update(dev_bt_mac, BT_DEV_ADDR_LEN);
+    #endif
+    sha.update(dev_eeprom_signature, EEPROM_SIG_LEN);
+    sha.finalize(dev_hash, DEV_HASH_LEN);
+    sha.clear();
+    #endif
     #endif
 
     device_load_signature();
