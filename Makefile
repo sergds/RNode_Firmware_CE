@@ -16,6 +16,8 @@
 # Version 2.0.17 of the Arduino ESP core is based on ESP-IDF v4.4.7
 ARDUINO_ESP_CORE_VER = 3.1.0
 
+RNODECONFEXE ?= rnodeconf
+
 V ?= 0
 VFLAG =
 ifeq "$(V)" "1"
@@ -316,6 +318,8 @@ upload-sergdsesp32c3:
 
 upload-pico2:
 	arduino-cli upload --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico2 --upload-property "upload.tool.default=picotool" -p "/dev"
+	@sleep 1
+	$(RNODECONFEXE) /dev/ttyACM0 -H $$(sha256sum build/rp2040.rp2040.rpipico2/RNode_Firmware_CE.ino.bin | cut -d " " -f1)
 
 release:  console-site spiffs-image $(shell grep ^release- Makefile | cut -d: -f1)
 
