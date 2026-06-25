@@ -1,11 +1,15 @@
 # Raspberry Pi RP MCU port
 Experimental port for pico chip family based on my personal branch with adapted LR1121 driver by Ben Agricola + subjective changes.
 
+Compatible RNodeInterface and rnodeconf are available [HERE](https://forge.sergds.xyz/sergds/Reticulum/src/branch/rp2xxx)
+
 ## Implemented boards:
 ### BOARD_GENERIC_RP2XXX (Generic RP2XXX Board)
 A generic Pico2-based build. 1 radio interface, LR1121 modem. i2c1 is dedicated to OLED.
 
-Pinout:
+LoRA module is Waveshare Core1121-HF.
+
+### Pinout:
 
 | Pin                        | GPIO Number |
 | -------------------------- | ----------- |
@@ -21,7 +25,27 @@ Pinout:
 | LR1121 DIO1 (IRQ)          | 16          |
 | LR1121 NRESET              | 6           |
 
-LoRA module is Waveshare Core1121-HF.
+### Build and flash:
+
+```shell
+make firmware-pico2
+make upload-pico2
+```
+
+> Pro tip:
+> you can specify rnodeconf to execute in make like this:
+> 
+> `make upload-pico2 RNODECONFEXE="python ~/Reticulum/RNS/Utilities/rnodeconf.py"`
+
+Provision EEPROM:
+```shell
+python rnodeconf.py /dev/ttyACM0 -r --platform 60 --product 65 --model fc --hwrev 01
+```
+
+Set firmware hash by reflashing via make or:
+```shell
+python rnodeconf.py /dev/ttyACM0 -H $(sha256sum build/rp2040.rp2040.rpipico2/RNode_Firmware_CE.ino.bin | cut -d " " -f1) # Or manually provide a sha256 hash of a .bin file after -H
+```
 
 ## Current RP-specific differences from upstream:
 - Device ID is pico unique ID (OTP CHIPID on RP235X, Flash UID on RP2040) instead of bluetooth MAC + sig hash.
