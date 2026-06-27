@@ -1485,7 +1485,7 @@
     #else
       #error An unsupported nRF board was selected. Cannot compile RNode firmware.
     #endif
-  #elif MCU_VARIANT == MCU_RP235X
+  #elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
     #define CONFIG_UART_BUFFER_SIZE 6144
     #define CONFIG_QUEUE_0_SIZE 6144
     #define CONFIG_QUEUE_MAX_LENGTH 200

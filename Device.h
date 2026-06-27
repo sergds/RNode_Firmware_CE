@@ -45,7 +45,9 @@
 #elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
 #define CHUNK_SIZE 256
 #include <pico/error.h>
+#if MCU_VARIANT == MCU_RP235X
 #include <pico/sha256.h>
+#endif
 #if MCU_VARIANT == MCU_RP2040
 #include <SHA256.h>
 #endif

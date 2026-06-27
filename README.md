@@ -52,13 +52,17 @@ python rnodeconf.py /dev/ttyACM0 -H $(sha256sum build/rp2040.rp2040.rpipico2/RNo
 - 10 Second button push resets device into usb boot (BOOTSEL) mode instead of weird esp-specific console thingy.
 
 ## Current chip support:
-- RP235X: Works, tested
-- RP2040: Theoretical, untested
-
-## Working features (RP2350):
+### RP235X: Works, tested
 - [X] Boots up, radio interface works
 - [X] Display, input
 - [X] Sleep mode (implemented via DORMANT mode)
+- [X] Device validation (firmware validation via hashing)
+- [ ] Bluetooth (Pico W, Boards with RM2)
+
+### RP2040: Builds and boots, untested (no functional board to test with peripherals, my pico 1w dc-dc converter outputs 5.5v)
+- [ ] Boots up, radio interface works
+- [ ] Display, input
+- [ ] Sleep mode (implemented via DORMANT mode)
 - [X] Device validation (firmware validation via hashing)
 - [ ] Bluetooth (Pico W, Boards with RM2)
 
