@@ -60,10 +60,10 @@ python rnodeconf.py /dev/ttyACM0 -H $(sha256sum build/rp2040.rp2040.rpipico2/RNo
 - [ ] Bluetooth (Pico W, Boards with RM2)
 
 ### RP2040: Builds and boots, untested (no functional board to test with peripherals, my pico 1w dc-dc converter outputs 5.5v)
-- [ ] Boots up, radio interface works
-- [ ] Display, input
-- [ ] Sleep mode (implemented via DORMANT mode)
-- [X] Device validation (firmware validation via hashing)
+- [X] Boots up, radio interface works
+- [X] Display, input
+- [X] Sleep mode (implemented via DORMANT mode)
+- [X] Device validation (firmware validation via hashing) (A bit slower, though)
 - [ ] Bluetooth (Pico W, Boards with RM2)
 
 # RNode Firmware - Community Edition
