@@ -401,13 +401,15 @@ bool display_init() {
       Wire.begin(SDA_OLED, SCL_OLED);
     #elif BOARD_VARIANT == MODEL_FD && BOARD_MODEL == BOARD_GENERIC_ESP32
       Wire.begin(SDA_OLED, SCL_OLED);
-    #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX && (HAS_BLUETOOTH == 0 || HAS_BLE == 0)
+    #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
       OLEDWire.begin();
       // TODO: Delete me and following code after bluetooth is implemented on RP2 -sergds
+      #if !HAS_BLUETOOTH
       pico_unique_board_id_t pico_id;
       pico_get_unique_board_id(&pico_id);
       memcpy(bt_dh+PICO_UNIQUE_BOARD_ID_SIZE_BYTES, pico_id.id, PICO_UNIQUE_BOARD_ID_SIZE_BYTES);
       sprintf(bt_devname, "RNode %02X%02X", bt_dh[14], bt_dh[15]);
+      #endif
     #endif
 
     #if HAS_EEPROM
@@ -922,8 +924,10 @@ void update_stat_area() {
   }
 }
 
+#if HAS_BLUETOOTH || HAS_BLE
 extern char bt_devname[11];
 extern char bt_dh[16];
+#endif
 
 void draw_disp_area() {
   if (!device_init_done || firmware_update_mode) {
