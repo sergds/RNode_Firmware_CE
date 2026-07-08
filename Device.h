@@ -43,7 +43,7 @@
 #endif
 
 #elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
-#define CHUNK_SIZE 256
+#define CHUNK_SIZE 512
 #include <pico/error.h>
 #if MCU_VARIANT == MCU_RP235X
 #include <pico/sha256.h>
@@ -213,6 +213,7 @@ void device_validate_partitions() {
   extern char __flash_binary_end;
   uintptr_t real_binary_end = (uintptr_t)&__flash_binary_end;
   uint8_t chunk[CHUNK_SIZE] = {0};
+  uint8_t skip = 0; // number of blocks to skip
   uint16_t size = 0;
   #if MCU_VARIANT == MCU_RP2040
   SHA256 sha;
@@ -232,8 +233,17 @@ void device_validate_partitions() {
     else
       size = CHUNK_SIZE;
     // Serial.printf("flash = %p, size = %i\r\n", flash, size);
-    
+    if (skip > 0) {
+      // Serial.printf("^^SKIPPED^^\r\n");
+      skip -= 1;
+      flash += (uintptr_t)size;
+      continue;
+    }
     memcpy(chunk, flash, size);
+    if (strcmp((char*)chunk, "BTstack") == 0) { // btstack link keys tlv header
+      skip = (2 * 4096) / CHUNK_SIZE; // skip 16 chunks (2 flash sectors) if we encounter a btstack TLV storage, thankfuly it's aligned to sector size 
+      continue;
+    }
 
     #if MCU_VARIANT == MCU_RP2040
       sha.update(chunk, size);
@@ -250,7 +260,10 @@ void device_validate_partitions() {
     pico_sha256_finish(&state, &res);
     memcpy(dev_firmware_hash, res.bytes, DEV_HASH_LEN);
   #endif
-  
+  // for (uint8_t i = 0; i < DEV_HASH_LEN; i++) {
+  //   Serial.printf("%0x", dev_firmware_hash[i]);
+  // }
+  // Serial.printf("\r\n");
   #endif
     for (uint8_t i = 0; i < DEV_HASH_LEN; i++) {
       if (dev_firmware_hash_target[i] != dev_firmware_hash[i]) {
@@ -267,7 +280,7 @@ bool device_firmware_ok() {
 #if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
 bool device_init() {
   #if VALIDATE_FIRMWARE
-  #if MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
+  #if MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040 && (HAS_BLUETOOTH == 0 || HAS_BLE == 0)
   // TODO: check this when bluetooth is implemented -sergds
   if (1) {
   #else

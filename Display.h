@@ -401,7 +401,7 @@ bool display_init() {
       Wire.begin(SDA_OLED, SCL_OLED);
     #elif BOARD_VARIANT == MODEL_FD && BOARD_MODEL == BOARD_GENERIC_ESP32
       Wire.begin(SDA_OLED, SCL_OLED);
-    #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
+    #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX && (HAS_BLUETOOTH == 0 || HAS_BLE == 0)
       OLEDWire.begin();
       // TODO: Delete me and following code after bluetooth is implemented on RP2 -sergds
       pico_unique_board_id_t pico_id;

@@ -177,7 +177,7 @@ firmware-pico2:
 	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico2 $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "build.f_cpu=133000000L" --build-property "build.usb_product=\"Pico2 RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x65\" \"-DBOARD_VARIANT=0xFC\""
 
 firmware-picow:
-	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipicow $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "build.f_cpu=200000000L" --build-property "build.usb_product=\"Pico W RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x65\" \"-DBOARD_VARIANT=0xFC\""
+	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipicow $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "build.f_cpu=200000000L" --build-property "build.usb_product=\"Pico W RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x65\" \"-DBOARD_VARIANT=0xFC\"" --build-property "build.libpicow=liblwip-bt.a" --build-property "build.libpicowdefs=\"-DLWIP_IPV6=0\" \"-DLWIP_IPV4=1\" \"-DENABLE_CLASSIC=1\" \"-DENABLE_BLE=1\" \"-DCYW43_ENABLE_BLUETOOTH=1\""
 
 firmware-rak4631:
 	arduino-cli compile --fqbn rakwireless:nrf52:WisCoreRAK4631Board $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x51\" \"-DBOARD_VARIANT=0x12\""
@@ -327,7 +327,7 @@ upload-pico2:
 upload-picow:
 	arduino-cli upload --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipicow --upload-property "upload.tool.default=picotool" -p "/dev"
 	@sleep 1
-	$(RNODECONFEXE) /dev/ttyACM0 -H $$(sha256sum build/rp2040.rp2040.rpipicow/RNode_Firmware_CE.ino.bin | cut -d " " -f1)
+	$(RNODECONFEXE) /dev/ttyACM0 -H $$(python rp2xxx_hash.py build/rp2040.rp2040.rpipicow | tail -n 1)
 
 release:  console-site spiffs-image $(shell grep ^release- Makefile | cut -d: -f1)
 
