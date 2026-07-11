@@ -15,6 +15,10 @@
 
 #ifdef ARDUINO_ARCH_RP2040
 #include "RP2040Support.h"
+#if !__FREERTOS
+#include "src/rp2xxx/CriticalSection.h"
+#include "src/rp2xxx/xQueue.h"
+#endif
 #endif
 #include "Radio.hpp"
 #include "Config.h"
@@ -1347,6 +1351,7 @@ void setTXPower(RadioInterface* radio, int txp) {
     if (model == MODEL_E3) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_E8) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
 
+    if (model == MODEL_FA) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FC) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FE) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FD) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);

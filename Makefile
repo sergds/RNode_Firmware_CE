@@ -30,7 +30,7 @@ ifeq "$(COMPILE_COMMANDS)" "1"
 DBFLAG =--only-compilation-database
 endif
 
-COMMON_RP2XXX_BUILD_FLAGS= --build-property "build.os=-D__FREERTOS"
+COMMON_RP2XXX_BUILD_FLAGS= --build-property "build.picodebugflags=-DENABLE_PICOTOOL_USB"
 COMMON_BUILD_FLAGS =  $(VFLAG) $(DBFLAG) -e --build-property "build.partitions=no_ota" --build-property "upload.maximum_size=2097152"
 COMMON_ESP_UPLOAD_FLAGS = $(VFLAG) --chip esp32 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m --flash_size 4MB 0x210000
 
