@@ -52,7 +52,7 @@ python rnodeconf.py /dev/ttyACM0 -H $(sha256sum build/rp2040.rp2040.rpipico2/RNo
 - 10 Second button push resets device into usb boot (BOOTSEL) mode instead of weird esp-specific console thingy.
 
 ## Current chip support:
-### RP235X: Works, tested
+### RP235X: Both ARM and RISC-V modes work, tested
 - [X] Boots up, radio interface works
 - [X] Display, input
 - [X] Sleep mode (implemented via DORMANT mode)

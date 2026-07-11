@@ -30,6 +30,12 @@ ifeq "$(COMPILE_COMMANDS)" "1"
 DBFLAG =--only-compilation-database
 endif
 
+RP235X_RISCV ?= 0
+ifeq "$(RP235X_RISCV)" "1"
+RP235X_RISCV_BUILD_FLAGS= --build-property "build.chip=rp2350-riscv" --build-property "build.toolchain=riscv32-unknown-elf" --build-property "build.toolchainpkg=pqt-gcc-riscv" --build-property "build.toolchainopts=-march=rv32imac_zicsr_zifencei_zba_zbb_zbs_zbkb -mabi=ilp32" --build-property "build.uf2family=--family rp2350-riscv --abs-block" --build-property "build.mcu=rv32imac"
+else
+RP235X_RISCV_BUILD_FLAGS=
+endif
 COMMON_RP2XXX_BUILD_FLAGS= --build-property "build.picodebugflags=-DENABLE_PICOTOOL_USB"
 COMMON_BUILD_FLAGS =  $(VFLAG) $(DBFLAG) -e --build-property "build.partitions=no_ota" --build-property "upload.maximum_size=2097152"
 COMMON_ESP_UPLOAD_FLAGS = $(VFLAG) --chip esp32 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m --flash_size 4MB 0x210000
@@ -174,7 +180,7 @@ compile_db-sergdsesp32c3: check_bt_buffers
 	arduino-cli compile --config-file arduino-cli.yaml --only-compilation-database --build-path "build" --fqbn esp32:esp32:esp32c3 $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x35\" \"-DBOARD_VARIANT=0xFD\""
 
 firmware-pico2:
-	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico2 $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "build.f_cpu=133000000L" --build-property "build.usb_product=\"Pico2 RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x65\" \"-DBOARD_VARIANT=0xFC\""
+	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico2 $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) $(RP235X_RISCV_BUILD_FLAGS) --build-property "build.f_cpu=133000000L" --build-property "build.usb_product=\"Pico2 RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x65\" \"-DBOARD_VARIANT=0xFC\""
 
 firmware-picow:
 	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipicow $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "build.f_cpu=200000000L" --build-property "build.usb_product=\"Pico W RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x65\" \"-DBOARD_VARIANT=0xFC\"" --build-property "build.libpicow=liblwip-bt.a" --build-property "build.libpicowdefs=\"-DLWIP_IPV6=0\" \"-DLWIP_IPV4=1\" \"-DENABLE_CLASSIC=1\" \"-DENABLE_BLE=1\" \"-DCYW43_ENABLE_BLUETOOTH=1\""
