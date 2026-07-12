@@ -22,7 +22,7 @@
 #include <BluetoothLock.h>
 #include <SerialUSB.h>
 
-#ifndef DEBUG
+#ifdef DEBUG
 #define TRACELOG(...) Serial.printf(__VA_ARGS__)
 #else
 #define TRACELOG(...) 
