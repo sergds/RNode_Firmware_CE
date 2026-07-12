@@ -13,6 +13,9 @@
 #include "Interfaces.h"
 #include "Boards.h"
 #include "src/misc/FIFOBuffer.h"
+#if MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040 && !__FREERTOS
+#include "src/rp2xxx/CriticalSection.h"
+#endif
 
 #define MAX_PKT_LENGTH                255
 

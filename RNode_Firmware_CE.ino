@@ -22,7 +22,9 @@
 #if PLATFORM == PLATFORM_RP2XXX
 #include "RP2040Support.h"
 #include "USB.h"
+#if __FREERTOS
 #include <FreeRTOS.h>
+#endif
 #include "hardware/gpio.h"
 #include "hardware/xosc.h"
 #include "hardware/clocks.h"
