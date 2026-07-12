@@ -333,7 +333,7 @@ uint8_t display_contrast = 0x00;
 #endif
 
 // TODO: Delete this after bluetooth is implemented on RP2 -sergds
-#if !HAS_BLUETOOTH
+#if HAS_BLUETOOTH == false && HAS_BLE == false
 char bt_devname[11];
 char bt_dh[16];
 #endif
@@ -404,7 +404,7 @@ bool display_init() {
     #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
       OLEDWire.begin();
       // TODO: Delete me and following code after bluetooth is implemented on RP2 -sergds
-      #if !HAS_BLUETOOTH
+      #if HAS_BLUETOOTH == false && HAS_BLE == false
       pico_unique_board_id_t pico_id;
       pico_get_unique_board_id(&pico_id);
       memcpy(bt_dh+PICO_UNIQUE_BOARD_ID_SIZE_BYTES, pico_id.id, PICO_UNIQUE_BOARD_ID_SIZE_BYTES);
@@ -877,7 +877,7 @@ void draw_stat_area() {
     }
 
     draw_cable_icon(3, 8);
-    #if HAS_BLUETOOTH == 1
+    #if HAS_BLUETOOTH || HAS_BLE == true
     draw_bt_icon(3, 30);
     #endif
     draw_lora_icon(interface_obj[0], 45, 8);
@@ -924,7 +924,7 @@ void update_stat_area() {
   }
 }
 
-#if HAS_BLUETOOTH || HAS_BLE
+#if HAS_BLUETOOTH || HAS_BLE == true
 extern char bt_devname[11];
 extern char bt_dh[16];
 #endif

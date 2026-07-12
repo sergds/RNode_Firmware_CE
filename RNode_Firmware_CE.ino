@@ -1780,12 +1780,9 @@ void sleep_now() {
         pinMode(PIN_DISP_SLEEP, OUTPUT);
         digitalWrite(PIN_DISP_SLEEP, DISP_SLEEP_LEVEL);
       #endif
-      // TODO -sergds
-      #if 0 // HAS_BLUETOOTH
-        if (bt_state == BT_STATE_CONNECTED) {
-          bt_stop();
-          delay(100);
-        }
+      #if HAS_BLUETOOTH || HAS_BLE == true
+        bt_stop();
+        delay(100);
       #endif
       gpio_init(PIN_WAKEUP);
       gpio_set_input_enabled(PIN_WAKEUP, true);
@@ -1851,6 +1848,9 @@ void button_event(uint8_t event, unsigned long duration) {
           console_start();
         #elif PLATFORM == PLATFORM_RP2XXX
           update_display(true);
+          #if HAS_BLUETOOTH || HAS_BLE == true
+            bt_stop();
+          #endif
           rom_reset_usb_boot(0, 0);
         #endif
       } else if (duration > 5000) {

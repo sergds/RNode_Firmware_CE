@@ -5,7 +5,9 @@ Compatible RNodeInterface and rnodeconf are available [HERE](https://forge.sergd
 
 ## Implemented boards:
 ### BOARD_GENERIC_RP2XXX (Generic RP2XXX Board)
-A generic Pico2-based build. 1 radio interface, LR1121 modem. i2c1 is dedicated to OLED.
+A generic Pico-based build. 1 radio interface, LR1121 modem. i2c1 is dedicated to OLED.
+
+Can be a `pico2` or `picow` if you have Pico W and want bluetooth (BLE Enabled by default).
 
 LoRA module is Waveshare Core1121-HF.
 
@@ -27,7 +29,10 @@ LoRA module is Waveshare Core1121-HF.
 
 ### Build and flash:
 
+you need to have picotool installed and be available in PATH to be able to upload firmware via make. Download it [here](https://github.com/raspberrypi/pico-sdk-tools/releases/latest).
+
 ```shell
+# replace pico2 with picow for Pico W boards
 make firmware-pico2
 make upload-pico2
 ```
@@ -39,17 +44,22 @@ make upload-pico2
 
 Provision EEPROM:
 ```shell
-python rnodeconf.py /dev/ttyACM0 -r --platform 60 --product 65 --model fc --hwrev 01
+rnodeconf /dev/ttyACM0 -r --platform 60 --product 65 --model fc --hwrev 01
+#for pico w (model is different):
+rnodeconf /dev/ttyACM0 -r --platform 60 --product 65 --model fa --hwrev 01
 ```
 
 Set firmware hash by reflashing via make or:
 ```shell
-python rnodeconf.py /dev/ttyACM0 -H $(sha256sum build/rp2040.rp2040.rpipico2/RNode_Firmware_CE.ino.bin | cut -d " " -f1) # Or manually provide a sha256 hash of a .bin file after -H
+rnodeconf /dev/ttyACM0 -H $(sha256sum build/rp2040.rp2040.rpipico2/RNode_Firmware_CE.ino.bin | cut -d " " -f1) # Or manually provide a sha256 hash of a .bin file after -H
+# for pico w (with bluetooth):
+rnodeconf /dev/ttyACM0 -H $(python rp2xxx_hash.py build/rp2040.rp2040.rpipicow | tail -n 1)
 ```
 
 ## Current RP-specific differences from upstream:
 - Device ID is pico unique ID (OTP CHIPID on RP235X, Flash UID on RP2040) instead of bluetooth MAC + sig hash.
-- 10 Second button push resets device into usb boot (BOOTSEL) mode instead of weird esp-specific console thingy.
+- 10 Second button push resets device into usb boot (BOOTSEL) mode instead of weird esp-specific console thingy
+- For Pico W with Bluetooth the firmware hash is calculated differently via `rp2xxx_hash.py` (the verification algorithm avoids btstack's tlv storage sectors). For `rp2xxx_hash.py` you will need `elftools` pypi package
 
 ## Current chip support:
 ### RP235X: Both ARM and RISC-V modes work, tested
@@ -57,14 +67,22 @@ python rnodeconf.py /dev/ttyACM0 -H $(sha256sum build/rp2040.rp2040.rpipico2/RNo
 - [X] Display, input
 - [X] Sleep mode (implemented via DORMANT mode)
 - [X] Device validation (firmware validation via hashing)
-- [ ] Bluetooth (Pico W, Boards with RM2)
+- [ ] Bluetooth Classic (Pico W, Boards with RM2)
+- [ ] Bluetooth Low Energy (Pico W, Boards with RM2)
 
 ### RP2040: Works, tested. Validation is slower because no crypto hw and no dsp instructions
 - [X] Boots up, radio interface works
 - [X] Display, input
 - [X] Sleep mode (implemented via DORMANT mode)
 - [X] Device validation (firmware validation via hashing) (A bit slower, though)
-- [ ] Bluetooth (Pico W, Boards with RM2)
+- [X] Bluetooth Classic (Pico W, Boards with RM2)
+- [X] Bluetooth Low Energy (Pico W, Boards with RM2)
+
+### Bluetooth support
+Bluetooth works, but not very well (especially in terms of discovery and connection initiation) even after 4 days of working on/debugging it.
+Both Bluetooth Classic (BRE/DR) and Bluetooth Low Energy (BLE) do work. Connection is stable once you connect, though initial pairing and bonding with RNode is sometimes buggy. For Bluetooth Classic you need to pair RNode in bluetooth settings before you can use it in Columba. 
+
+If you reflash the firmware all link keys (BRE/DR) or security manager database (BLE) will be wiped, and you will have to remove your rnode in bluetooth settings and pair again.
 
 # RNode Firmware - Community Edition
 
