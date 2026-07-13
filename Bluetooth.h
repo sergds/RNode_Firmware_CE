@@ -69,7 +69,7 @@ char bt_da[BT_DEV_ADDR_LEN];
 char bt_dh[BT_DEV_HASH_LEN];
 char bt_devname[11];
 
-#if MCU_VARIANT == MCU_ESP32 & 0
+#if MCU_VARIANT == MCU_ESP32
   #if HAS_BLUETOOTH == true
 
     void bt_confirm_pairing(uint32_t numVal) {
@@ -405,7 +405,7 @@ char bt_devname[11];
     }
   #endif
 
-#elif MCU_VARIANT == MCU_NRF52 & 0
+#elif MCU_VARIANT == MCU_NRF52
     uint32_t pairing_pin = 0;
 
   uint8_t eeprom_read(uint32_t mapped_addr);

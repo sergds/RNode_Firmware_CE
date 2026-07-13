@@ -939,7 +939,7 @@ void draw_disp_area() {
     if (!device_init_done) disp_area.drawBitmap(0, p_by, bm_boot, disp_area.width(), 27, DISPLAY_WHITE, DISPLAY_BLACK);
     if (firmware_update_mode) disp_area.drawBitmap(0, p_by, bm_fw_update, disp_area.width(), 27, DISPLAY_WHITE, DISPLAY_BLACK);
   } else {
-    if (!disp_ext_fb or bt_ssp_pin != 0) {
+    if (!disp_ext_fb or (bt_ssp_pin != 0 && bt_state == BT_STATE_PAIRING)) {
       if (radio_online && display_diagnostics) {
 
         disp_area.fillRect(0,8,disp_area.width(),37, DISPLAY_BLACK); disp_area.fillRect(0,37,disp_area.width(),27, DISPLAY_WHITE); 

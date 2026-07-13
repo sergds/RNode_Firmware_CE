@@ -5,7 +5,7 @@
 */
 #include <Arduino.h>
 #include "../../Boards.h"
-#if HAS_BLUETOOTH == true
+#if HAS_BLUETOOTH == true && PLATFORM == PLATFORM_RP2XXX
 #include "BluetoothSerial.h"
 #include "CoreMutex.h"
 #include "LocklessQueue.h"

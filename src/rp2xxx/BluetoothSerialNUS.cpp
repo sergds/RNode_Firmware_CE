@@ -5,7 +5,7 @@
 */
 #include <Arduino.h>
 #include "../../Boards.h"
-#if HAS_BLE == true
+#if HAS_BLE == true && PLATFORM == PLATFORM_RP2XXX
 #include "btstack_util.h"
 #include "ble/sm.h"
 #include "BluetoothSerialNUS.h"
