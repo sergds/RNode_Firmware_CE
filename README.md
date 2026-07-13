@@ -29,8 +29,18 @@ LoRA module is Waveshare Core1121-HF.
 
 ### Build and flash:
 
-you need to have picotool installed and be available in PATH to be able to upload firmware via make. Download it [here](https://github.com/raspberrypi/pico-sdk-tools/releases/latest).
+You need to have picotool installed and be available in PATH to be able to upload firmware via make. Download it [here](https://github.com/raspberrypi/pico-sdk-tools/releases/latest).
 
+Prepare build environment:
+```shell
+python -m venv .venv
+source .venv/bin/activate
+# needed for rp2xxx_hash.py
+pip install elftools
+make prep-rp2xxx
+```
+
+Build it and upload:
 ```shell
 # replace pico2 with picow for Pico W boards
 make firmware-pico2
