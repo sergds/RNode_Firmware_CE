@@ -74,10 +74,19 @@
       #define INTERFACE_SPI
       SPIClassRP2040 interface_spi[1] = {
         SPIClassRP2040(spi0,
-          interface_pins[0][3],
-          interface_pins[0][0],
-          interface_pins[0][1],
-          interface_pins[0][2])
+          interface_pins[0][3], // miso
+          interface_pins[0][0], // slave select
+          interface_pins[0][1], // clock
+          interface_pins[0][2]) // mosi
+      };
+      #elif BOARD_MODEL == BOARD_RP2040_LORA
+      #define INTERFACE_SPI
+        SPIClassRP2040 interface_spi[1] = {
+        SPIClassRP2040(spi1,
+          interface_pins[0][3], // miso
+          interface_pins[0][0], // slave select
+          interface_pins[0][1], // clock
+          interface_pins[0][2]) // mosi
       };
       #endif
 #endif
@@ -211,7 +220,7 @@ void setup() {
     boot_seq();
   #endif
 
-  #if BOARD_MODEL != BOARD_RAK4631 && BOARD_MODEL != BOARD_HELTEC_T114 && BOARD_MODEL != BOARD_TECHO && BOARD_MODEL != BOARD_T3S3 && BOARD_MODEL != BOARD_TBEAM_S_V1 && BOARD_MODEL != BOARD_OPENCOM_XL && BOARD_MODEL != BOARD_GENERIC_RP2XXX
+  #if BOARD_MODEL != BOARD_RAK4631 && BOARD_MODEL != BOARD_HELTEC_T114 && BOARD_MODEL != BOARD_TECHO && BOARD_MODEL != BOARD_T3S3 && BOARD_MODEL != BOARD_TBEAM_S_V1 && BOARD_MODEL != BOARD_OPENCOM_XL && BOARD_MODEL != BOARD_GENERIC_RP2XXX && BOARD_MODEL != BOARD_RP2040_LORA
   // Some boards need to wait until the hardware UART is set up before booting
   // the full firmware. In the case of the RAK4631/TECHO, the line below will wait
   // until a serial connection is actually established with a master. Thus, it
@@ -1773,7 +1782,8 @@ void sleep_now() {
       esp_sleep_enable_ext0_wakeup(PIN_WAKEUP, WAKEUP_LEVEL);
       esp_deep_sleep_start();
     #elif PLATFORM == PLATFORM_RP2XXX
-      #if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+      #if HAS_DISPLAY == true
+      if (disp_ready)
         update_display(true);
       #endif
       #if PIN_DISP_SLEEP >= 0
@@ -1847,7 +1857,9 @@ void button_event(uint8_t event, unsigned long duration) {
           console_active = true;
           console_start();
         #elif PLATFORM == PLATFORM_RP2XXX
+          #if HAS_DISPLAY == true
           update_display(true);
+          #endif
           #if HAS_BLUETOOTH || HAS_BLE == true
             bt_stop();
           #endif

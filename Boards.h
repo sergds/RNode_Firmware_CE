@@ -138,7 +138,9 @@
   #define BOARD_GENERIC_ESP32 0x35
   #define BOARD_GENERIC_NRF52 0x50
   #define BOARD_GENERIC_RP2XXX 0x65
+  #define BOARD_RP2040_LORA 0x66 // Waveshare RP2040-LoRa, https://www.waveshare.com/wiki/RP2040-LoRa
   #define MODEL_FA            0xFA // Homebrew board, Raspbery Pi Pico W, BLE, RP2040, LR1121
+  #define MODEL_FB            0xFB // Waveshare RP2040-LoRa, RP2040, SX1262
   #define MODEL_FC            0xFC // Homebrew board, Raspbery Pi Pico 2, RP2350, LR1121
   #define MODEL_FE            0xFE // Homebrew board, max 17dBm output power
   #define MODEL_FD            0xFD // Homebrew board, Tseryobla3000, ESP32-C3, SX1262
@@ -1500,11 +1502,10 @@
     #define HAS_SLEEP false
     #define PIN_DISP_SLEEP -1
     #define VALIDATE_FIRMWARE true
+    #define HAS_EEPROM true
 
 
     #if BOARD_MODEL == BOARD_GENERIC_RP2XXX
-      #define HAS_INPUT false
-      #define HAS_EEPROM true
       #define INTERFACE_COUNT 1
       #define HAS_DISPLAY true
       #define DISPLAY OLED
@@ -1553,7 +1554,37 @@
     #define HAS_BLE true
     #define HAS_BLUETOOTH false
     #endif
+    #elif BOARD_MODEL == BOARD_RP2040_LORA
+      #define INTERFACE_COUNT 1
+      const int pin_led_rx = 25;
+      const int pin_led_tx = 25;
+      const uint8_t interfaces[INTERFACE_COUNT] = {SX1262};
+      const bool interface_cfg[INTERFACE_COUNT][3] = { 
+                    // SX1262
+          {
+              false, // DEFAULT_SPI
+              true, // HAS_TCXO
+              true  // DIO2_AS_RF_SWITCH
+          }
+      };
+      const int8_t interface_pins[INTERFACE_COUNT][10] = { 
+                  // SX1262
+          {
+              13, // pin_ss
+              14, // pin_sclk
+              15, // pin_mosi
+              24, // pin_miso
+              18, // pin_busy
+              16, // pin_dio
+              23, // pin_reset
+              -1, // pin_txen
+              17, // pin_rxen
+              -1  // pin_tcxo_enable
+          }
+      };
+
     #endif
+    
 
   #endif
 

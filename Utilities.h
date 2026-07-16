@@ -386,7 +386,7 @@ uint8_t boot_vector = 0x00;
 		void led_tx_off() { npset(0, 0, 0); }
 		void led_id_on()  { npset(0x90, 0, 0x70); }
 		void led_id_off() { npset(0, 0, 0); }
-	#elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
+	#elif BOARD_MODEL == BOARD_GENERIC_RP2XXX || BOARD_MODEL == BOARD_RP2040_LORA
 		void led_rx_on()  { digitalWrite(pin_led_rx, HIGH); }
 		void led_rx_off() {	digitalWrite(pin_led_rx, LOW); }
 		void led_tx_on()  { digitalWrite(pin_led_tx, HIGH); }
@@ -1352,6 +1352,7 @@ void setTXPower(RadioInterface* radio, int txp) {
     if (model == MODEL_E8) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
 
     if (model == MODEL_FA) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
+    if (model == MODEL_FB) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FC) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FE) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FD) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
@@ -1582,7 +1583,7 @@ bool eeprom_product_valid() {
 	#elif PLATFORM == PLATFORM_NRF52
 	if (rval == PRODUCT_RAK4631 || rval == PRODUCT_HELTEC_T114 || rval == PRODUCT_OPENCOM_XL || rval == PRODUCT_TECHO || rval == PRODUCT_HMBRW) {
 	#elif PLATFORM == PLATFORM_RP2XXX
-	if (rval == BOARD_GENERIC_RP2XXX || rval == PRODUCT_HMBRW) {
+	if (rval == BOARD_GENERIC_RP2XXX || rval == BOARD_RP2040_LORA || rval == PRODUCT_HMBRW) {
 	#else
 	if (false) {
 	#endif
@@ -1646,6 +1647,8 @@ bool eeprom_model_valid() {
 	if (model == MODEL_FF || model == MODEL_FD || model == MODEL_FE) {
 	#elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
 	if (model == MODEL_FC) {
+	#elif BOARD_MODEL == BOARD_RP2040_LORA
+	if (model == MODEL_FB) {
 	#else
 	if (false) {
 	#endif
