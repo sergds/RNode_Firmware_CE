@@ -13,6 +13,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#ifdef ARDUINO_ARCH_RP2040
+  #include "RP2040Support.h"
+  #if !__FREERTOS
+    #include "src/rp2xxx/CriticalSection.h"
+    #include "src/rp2xxx/xQueue.h"
+  #endif
+#endif
 #include "Radio.hpp"
 #include "Config.h"
 
@@ -66,7 +73,7 @@ uint8_t eeprom_read(uint32_t mapped_addr);
     #include "src/misc/gps.h"
 #endif
 
-#if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52
+#if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
 	#include "Device.h"
 #endif
 #if MCU_VARIANT == MCU_ESP32
@@ -362,6 +369,22 @@ uint8_t boot_vector = 0x00;
 		void led_id_on()  { }
 		void led_id_off() { }
 	#endif
+#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
+	#if HAS_NP == true
+		void led_rx_on()  { npset(0, 0, 0xFF); }
+		void led_rx_off() {	npset(0, 0, 0); }
+		void led_tx_on()  { npset(0xFF, 0x50, 0x00); }
+		void led_tx_off() { npset(0, 0, 0); }
+		void led_id_on()  { npset(0x90, 0, 0x70); }
+		void led_id_off() { npset(0, 0, 0); }
+	#elif BOARD_MODEL == BOARD_GENERIC_RP2XXX || BOARD_MODEL == BOARD_RP2040_LORA
+		void led_rx_on()  { digitalWrite(pin_led_rx, HIGH); }
+		void led_rx_off() {	digitalWrite(pin_led_rx, LOW); }
+		void led_tx_on()  { digitalWrite(pin_led_tx, HIGH); }
+		void led_tx_off() { digitalWrite(pin_led_tx, LOW); }
+		void led_id_on()  { }
+		void led_id_off() { }
+	#endif
 #endif
 
 void hard_reset(void) {
@@ -369,6 +392,8 @@ void hard_reset(void) {
 		ESP.restart();
 	#elif MCU_VARIANT == MCU_NRF52
     NVIC_SystemReset();
+	#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
+	rp2040.reboot();
 	#endif
 }
 
@@ -456,7 +481,7 @@ void led_indicate_warning(int cycles) {
 }
 
 // LED Indication: Info
-#if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52
+#if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
 	#if HAS_NP == true
 		void led_indicate_info(int cycles) {
 			bool forever = (cycles == 0) ? true : false;
@@ -567,6 +592,31 @@ unsigned long led_standby_ticks = 0;
 		unsigned long led_notready_ticks = 0;
 		unsigned long led_standby_wait = 1768;
 		unsigned long led_notready_wait = 150;
+#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
+	#if HAS_NP == true
+		int led_standby_lng = 200;
+		int led_standby_cut = 100;
+		int led_standby_min = 0;
+		int led_standby_max = 375+led_standby_lng;
+		int led_notready_min = 0;
+		int led_notready_max = led_standby_max;
+		int led_notready_value = led_notready_min;
+		int8_t  led_notready_direction = 0;
+		unsigned long led_notready_ticks = 0;
+		unsigned long led_standby_wait = 350;
+		unsigned long led_console_wait = 1;
+		unsigned long led_notready_wait = 200;
+	#else
+		uint8_t led_standby_min = 200;
+		uint8_t led_standby_max = 255;
+		uint8_t led_notready_min = 0;
+		uint8_t led_notready_max = 255;
+		uint8_t led_notready_value = led_notready_min;
+		int8_t  led_notready_direction = 0;
+		unsigned long led_notready_ticks = 0;
+		unsigned long led_standby_wait = 1768;
+		unsigned long led_notready_wait = 150;
+	#endif
 #endif
 
 unsigned long led_standby_value = led_standby_min;
@@ -1291,6 +1341,9 @@ void setTXPower(RadioInterface* radio, int txp) {
     if (model == MODEL_E3) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_E8) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
 
+    if (model == MODEL_FA) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
+    if (model == MODEL_FB) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
+    if (model == MODEL_FC) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FE) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FF) radio->setTxPower(txp, PA_OUTPUT_RFO_PIN);
 }
@@ -1455,7 +1508,7 @@ void eeprom_flush() {
 #endif
 
 void eeprom_update(int mapped_addr, uint8_t byte) {
-	#if MCU_VARIANT == MCU_ESP32
+	#if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
 		if (EEPROM.read(mapped_addr) != byte) {
 			EEPROM.write(mapped_addr, byte);
 			EEPROM.commit();
@@ -1518,6 +1571,8 @@ bool eeprom_product_valid() {
 	if (rval == PRODUCT_RNODE || rval == BOARD_RNODE_NG_20 || rval == BOARD_RNODE_NG_21 || rval == PRODUCT_HMBRW || rval == PRODUCT_TBEAM || rval == PRODUCT_T32_10 || rval == PRODUCT_T32_20 || rval == PRODUCT_T32_21 || rval == PRODUCT_H32_V2 || rval == PRODUCT_H32_V3 || rval == PRODUCT_TDECK_V1 || rval == PRODUCT_TBEAM_S_V1 || rval == PRODUCT_H_W_PAPER || rval == PRODUCT_XIAO_S3) {
 	#elif PLATFORM == PLATFORM_NRF52
 	if (rval == PRODUCT_RAK4631 || rval == PRODUCT_HELTEC_T114 || rval == PRODUCT_OPENCOM_XL || rval == PRODUCT_TECHO || rval == PRODUCT_HMBRW) {
+	#elif PLATFORM == PLATFORM_RP2XXX
+	if (rval == BOARD_GENERIC_RP2XXX || rval == BOARD_RP2040_LORA || rval == PRODUCT_HMBRW) {
 	#else
 	if (false) {
 	#endif
@@ -1579,6 +1634,10 @@ bool eeprom_model_valid() {
 	if (model == MODEL_FF || model == MODEL_FE) {
 	#elif BOARD_MODEL == BOARD_GENERIC_ESP32
 	if (model == MODEL_FF || model == MODEL_FE) {
+	#elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
+	if (model == MODEL_FC) {
+	#elif BOARD_MODEL == BOARD_RP2040_LORA
+	if (model == MODEL_FB) {
 	#else
 	if (false) {
 	#endif

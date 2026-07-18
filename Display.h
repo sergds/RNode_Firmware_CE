@@ -15,6 +15,10 @@
 
 #include <Adafruit_GFX.h>
 
+#if PLATFORM == PLATFORM_RP2XXX
+#include <pico/unique_id.h>
+#endif
+
 #define DISP_W 128
 #define DISP_H 64
 
@@ -141,6 +145,10 @@ void busyCallback(const void* p) { display_callback(); }
   #define DISP_CUSTOM_ADDR true
 #endif
 
+#if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+  TwoWire OLEDWire(RP2XXX_I2C, SDA_OLED, SCL_OLED);
+#endif
+
 #define SMALL_FONT &Org_01
 
 #include "Graphics.h"
@@ -167,7 +175,11 @@ uint32_t last_epd_full_refresh = 0;
 #define REFRESH_PERIOD 300000 // 5 minutes in ms
 #else
   #if DISPLAY == OLED
+  #if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+    Adafruit_SSD1306 display(DISP_W, DISP_H, &OLEDWire, DISP_RST);
+  #else
     Adafruit_SSD1306 display(DISP_W, DISP_H, &Wire, DISP_RST);
+  #endif
   #elif BOARD_MODEL == BOARD_TDECK
     Adafruit_ST7789 display = Adafruit_ST7789(DISPLAY_CS, DISPLAY_DC, -1);
   #elif BOARD_MODEL == BOARD_TBEAM_S_V1
@@ -318,6 +330,12 @@ uint8_t display_contrast = 0x00;
   }
 #endif
 
+// TODO: Delete this after bluetooth is implemented on RP2 -sergds
+#if HAS_BLUETOOTH == false && HAS_BLE == false
+char bt_devname[11];
+char bt_dh[16];
+#endif
+
 bool display_init() {
   #if HAS_DISPLAY
     #if BOARD_MODEL == BOARD_RNODE_NG_20 || BOARD_MODEL == BOARD_LORA32_V2_0
@@ -379,6 +397,17 @@ bool display_init() {
       Wire.begin(SDA_OLED, SCL_OLED);
     #elif BOARD_MODEL == BOARD_XIAO_S3
       Wire.begin(SDA_OLED, SCL_OLED);
+    #elif BOARD_VARIANT == MODEL_FD && BOARD_MODEL == BOARD_GENERIC_ESP32
+      Wire.begin(SDA_OLED, SCL_OLED);
+    #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
+      OLEDWire.begin();
+      // TODO: Delete me and following code after bluetooth is implemented on RP2 -sergds
+      #if HAS_BLUETOOTH == false && HAS_BLE == false
+      pico_unique_board_id_t pico_id;
+      pico_get_unique_board_id(&pico_id);
+      memcpy(bt_dh+PICO_UNIQUE_BOARD_ID_SIZE_BYTES, pico_id.id, PICO_UNIQUE_BOARD_ID_SIZE_BYTES);
+      sprintf(bt_devname, "RNode %02X%02X", bt_dh[14], bt_dh[15]);
+      #endif
     #endif
 
     #if HAS_EEPROM
@@ -843,7 +872,9 @@ void draw_stat_area() {
     }
 
     draw_cable_icon(3, 8);
+    #if HAS_BLUETOOTH || HAS_BLE == true
     draw_bt_icon(3, 30);
+    #endif
     draw_lora_icon(interface_obj[0], 45, 8);
 
     // todo, expand support to show more than two interfaces on screen
@@ -888,8 +919,10 @@ void update_stat_area() {
   }
 }
 
+#if HAS_BLUETOOTH || HAS_BLE == true
 extern char bt_devname[11];
 extern char bt_dh[16];
+#endif
 
 void draw_disp_area() {
   if (!device_init_done || firmware_update_mode) {

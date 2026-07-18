@@ -34,7 +34,29 @@
   BLEDis  bledis;
   BLEBas  blebas;
   bool SerialBT_init = false;
+
+#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP2350
+  #if HAS_BLUETOOTH || HAS_BLE == true
+    #include <BluetoothLock.h>
+    #include <bluetooth.h>
+    #include <gap.h>
+    //#include "src/rp2xxx/btstack_undefs.h"
+    #if HAS_BLE
+      #include "src/rp2xxx/BluetoothSerialNUS.h"
+      #include <ble/sm.h>
+      #include <ble/le_device_db.h>
+      BluetoothSerialNUS SerialBT;
+    #else
+      #include "src/rp2xxx/BluetoothSerial.h"
+      BluetoothSerial SerialBT;
+    #endif
+    #undef log_debug
+    #undef log_error
+    #undef log_info
+    #include "src/misc/MD5.h"
+  #endif
 #endif
+
 
 #define BT_PAIRING_TIMEOUT 35000
 #define BLE_FLUSH_TIMEOUT 20
@@ -607,4 +629,139 @@ char bt_devname[11];
       bt_disable_pairing();
     }
   }
+#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP2350
+#if HAS_BLUETOOTH || HAS_BLE == true
+  void bt_confirm_pairing(uint32_t numVal) {
+    display_unblank();
+    bt_ssp_pin = numVal;
+    kiss_indicate_btpin();
+  }
+
+  void bt_flush() { if (bt_state == BT_STATE_CONNECTED) { SerialBT.flush(); } }
+
+  void bt_start() {
+    display_unblank();
+    if (bt_state == BT_STATE_OFF) {
+      SerialBT.setName(bt_devname);
+      SerialBT.begin();
+      bt_state = BT_STATE_ON;
+      }
+  }
+
+  void bt_enable_pairing() {
+    display_unblank();
+    if (bt_state == BT_STATE_OFF) bt_start();
+    bt_allow_pairing = true;
+    bt_pairing_started = millis();
+    bt_state = BT_STATE_PAIRING;
+    SerialBT.setBondable(true);
+  }
+
+  void bt_disable_pairing() {
+    display_unblank();
+    bt_allow_pairing = false;
+    bt_ssp_pin = 0;
+    bt_state = BT_STATE_ON;
+    SerialBT.setBondable(false);
+  }
+
+  void bt_stop() {
+    display_unblank();
+    if (bt_state != BT_STATE_OFF) {
+      bt_disable_pairing();
+      SerialBT.end();
+      bt_state = BT_STATE_OFF;
+    }
+  }
+
+  void bt_pairing_complete(bool success) {
+    display_unblank();
+    if (success) {
+      bt_disable_pairing();
+      SerialBT.disconnect();
+    } else {
+      bt_ssp_pin = 0;
+    }
+  }
+
+  void bt_connection_callback(bool state) {
+    display_unblank();
+    if(state) {
+      bt_state = BT_STATE_CONNECTED;
+      cable_state = CABLE_STATE_DISCONNECTED;
+    } else {
+      bt_state = BT_STATE_ON;
+    }
+  }
+
+  bool bt_setup_hw() {
+    if (!bt_ready) {
+      if (EEPROM.read(eeprom_addr(ADDR_CONF_BT)) == BT_ENABLE_BYTE) {
+        bt_enabled = true;
+      } else {
+        bt_enabled = false;
+      }
+      // TODO(rp2xxx): Setup callbacks in custom bluetooth serial implementation
+      // TODO(rp2xxx): CYW43 is already initialized by arduino-pico board variant code. Double check it here. -sergds
+      if (1) { // bluetooth initialized
+        {
+          BluetoothLock l;
+          bd_addr_t gap_addr;
+          gap_local_bd_addr(gap_addr);
+          char *data = (char*)malloc(BT_DEV_ADDR_LEN+1);
+          for (int i = 0; i < BT_DEV_ADDR_LEN; i++) {
+              data[i] = gap_addr[i];
+          }
+          #if HAS_EEPROM
+              data[BT_DEV_ADDR_LEN] = EEPROM.read(eeprom_addr(ADDR_SIGNATURE));
+          #else
+              data[BT_DEV_ADDR_LEN] = eeprom_read(eeprom_addr(ADDR_SIGNATURE));
+          #endif
+          unsigned char *hash = MD5::make_hash(data, BT_DEV_ADDR_LEN);
+          memcpy(bt_dh, hash, BT_DEV_HASH_LEN);
+          sprintf(bt_devname, "RNode %02X%02X", bt_dh[14], bt_dh[15]);
+          free(data);
+        }
+        SerialBT.setPairingCallback(&bt_confirm_pairing);
+        SerialBT.setPairingCompleteCallback(&bt_pairing_complete);
+        SerialBT.setConnectionCallback(&bt_connection_callback);
+        SerialBT.setFIFOSize(6144);
+      }
+      bt_ready = true;
+      return true;
+    } else { return false; }
+  }
+
+  bool bt_init() {
+      bt_state = BT_STATE_OFF;
+      if (bt_setup_hw()) {
+        if (bt_enabled && !console_active) bt_start();
+        return true;
+      } else {
+        return false;
+      }
+  }
+
+  void bt_debond_all() {
+    BluetoothLock l;
+    #if HAS_BLUETOOTH
+      gap_delete_all_link_keys();
+    #elif HAS_BLE
+      int devcount = le_device_db_count();
+      for (int i = 0; i < devcount; i++) {le_device_db_remove(i);}
+    #endif
+  }
+
+  void update_bt() {
+    if (bt_allow_pairing && millis()-bt_pairing_started >= BT_PAIRING_TIMEOUT) {
+      bt_disable_pairing();
+    }
+    if (bt_state == BT_STATE_CONNECTED && millis()-SerialBT.lastFlushTime >= BLE_FLUSH_TIMEOUT) {
+      if (SerialBT.getTxbuflenght() > 0) {
+        SerialBT.flush();
+      }
+    }
+  }
+
+#endif
 #endif

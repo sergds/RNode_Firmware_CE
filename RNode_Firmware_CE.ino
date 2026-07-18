@@ -15,7 +15,22 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include "Radio.hpp"
 #include "Utilities.h"
+
+#if PLATFORM == PLATFORM_RP2XXX
+  #include "RP2040Support.h"
+  #include "USB.h"
+  #if __FREERTOS
+    #include <FreeRTOS.h>
+  #endif
+  #include "hardware/gpio.h"
+  #include "hardware/xosc.h"
+  #include "hardware/clocks.h"
+  #include "hardware/pll.h"
+  #include "pico/runtime_init.h"
+  #include "pico/bootrom.h"
+#endif
 
 #if MCU_VARIANT == MCU_NRF52
   #if BOARD_MODEL == BOARD_RAK4631 || BOARD_MODEL == BOARD_OPENCOM_XL
@@ -53,6 +68,26 @@
                )
       };
   #endif
+#elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
+      #if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+      #define INTERFACE_SPI
+      SPIClassRP2040 interface_spi[1] = {
+        SPIClassRP2040(spi0,
+          interface_pins[0][3], // miso
+          interface_pins[0][0], // slave select
+          interface_pins[0][1], // clock
+          interface_pins[0][2]) // mosi
+      };
+      #elif BOARD_MODEL == BOARD_RP2040_LORA
+      #define INTERFACE_SPI
+        SPIClassRP2040 interface_spi[1] = {
+        SPIClassRP2040(spi1,
+          interface_pins[0][3], // miso
+          interface_pins[0][0], // slave select
+          interface_pins[0][1], // clock
+          interface_pins[0][2]) // mosi
+      };
+      #endif
 #endif
 
 #ifndef INTERFACE_SPI
@@ -121,6 +156,9 @@ void setup() {
       pinMode(DISPLAY_BL_PIN, OUTPUT);
     #endif
 
+  #elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
+    EEPROM.begin(EEPROM_SIZE);
+  
   #elif MCU_VARIANT == MCU_NRF52
     #if BOARD_MODEL == BOARD_TECHO
       delay(200);
@@ -152,6 +190,8 @@ void setup() {
     // On nRF, get the seed value from the
     // hardware RNG
     unsigned long seed_val = get_rng_seed();
+  #elif PLATFORM == PLATFORM_RP2XXX
+    unsigned long seed_val = rp2040.hwrand32();
   #else
     // Otherwise, get a pseudo-random seed
     // value from an unconnected analog pin
@@ -175,11 +215,11 @@ void setup() {
     led_init();
   #endif
 
-  #if MCU_VARIANT == MCU_NRF52 && HAS_NP == true
+  #if MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040 && HAS_NP == true
     boot_seq();
   #endif
 
-  #if BOARD_MODEL != BOARD_RAK4631 && BOARD_MODEL != BOARD_HELTEC_T114 && BOARD_MODEL != BOARD_TECHO && BOARD_MODEL != BOARD_T3S3 && BOARD_MODEL != BOARD_TBEAM_S_V1 && BOARD_MODEL != BOARD_OPENCOM_XL
+  #if BOARD_MODEL != BOARD_RAK4631 && BOARD_MODEL != BOARD_HELTEC_T114 && BOARD_MODEL != BOARD_TECHO && BOARD_MODEL != BOARD_T3S3 && BOARD_MODEL != BOARD_TBEAM_S_V1 && BOARD_MODEL != BOARD_OPENCOM_XL && BOARD_MODEL != BOARD_GENERIC_RP2XXX && BOARD_MODEL != BOARD_RP2040_LORA
   // Some boards need to wait until the hardware UART is set up before booting
   // the full firmware. In the case of the RAK4631/TECHO, the line below will wait
   // until a serial connection is actually established with a master. Thus, it
@@ -444,7 +484,7 @@ inline void kiss_write_packet(int index) {
   serial_write(CMD_DATA);
 
   for (uint16_t i = 0; i < read_len[index]; i++) {
-    #if MCU_VARIANT == MCU_NRF52
+    #if MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
       portENTER_CRITICAL();
       uint8_t byte = pbuf[i];
       portEXIT_CRITICAL();
@@ -467,7 +507,7 @@ inline void kiss_write_packet(int index) {
 
 inline void getPacketData(RadioInterface* radio, uint16_t len) {
     uint8_t index = radio->getIndex();
-  #if MCU_VARIANT != MCU_NRF52
+  #if MCU_VARIANT != MCU_NRF52 && MCU_VARIANT != MCU_RP235X && MCU_VARIANT != MCU_RP2040
     while (len-- && read_len[index] < MTU) {
       pbuf[read_len[index]++] = radio->read();
     }  
@@ -525,7 +565,7 @@ void ISR_VECT receive_callback(uint8_t index, int packet_size) {
       // This is the first part of a split
       // packet, so we set the seq variable
       // and add the data to the buffer
-      #if MCU_VARIANT == MCU_NRF52
+      #if MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
         int_mask = taskENTER_CRITICAL_FROM_ISR(); read_len[index] = 0; taskEXIT_CRITICAL_FROM_ISR(int_mask);
       #else
         read_len[index] = 0;
@@ -550,7 +590,7 @@ void ISR_VECT receive_callback(uint8_t index, int packet_size) {
       // same sequence id, so we must assume
       // that we are seeing the first part of
       // a new split packet.
-      #if MCU_VARIANT == MCU_NRF52
+      #if MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
         int_mask = taskENTER_CRITICAL_FROM_ISR(); read_len[index] = 0; taskEXIT_CRITICAL_FROM_ISR(int_mask);
       #else
         read_len[index] = 0;
@@ -567,7 +607,7 @@ void ISR_VECT receive_callback(uint8_t index, int packet_size) {
       if (seq[index] != SEQ_UNSET) {
         // If we already had part of a split
         // packet in the buffer, we clear it.
-        #if MCU_VARIANT == MCU_NRF52
+        #if MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
           int_mask = taskENTER_CRITICAL_FROM_ISR(); read_len[index] = 0; taskEXIT_CRITICAL_FROM_ISR(int_mask);
         #else
           read_len[index] = 0;
@@ -1376,6 +1416,18 @@ void validate_status() {
       uint8_t F_POR = 0x00;
       uint8_t F_BOR = 0x00;
       uint8_t F_WDR = 0x01;
+  #elif MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
+      uint8_t boot_flags = rp2040.getResetReason();
+      uint8_t F_POR = RP2040::resetReason_t::PWRON_RESET;
+      uint8_t F_BOR = RP2040::resetReason_t::BROWNOUT_RESET;
+      uint8_t F_WDR = RP2040::resetReason_t::WDT_RESET;
+      // RP2 Specific
+      uint8_t F_UNK = RP2040::resetReason_t::UNKNOWN_RESET;
+      uint8_t F_RUN = RP2040::resetReason_t::RUN_PIN_RESET;
+      uint8_t F_RST = RP2040::resetReason_t::SOFT_RESET;
+      uint8_t F_DBG = RP2040::resetReason_t::DEBUG_RESET;
+      uint8_t F_GLT = RP2040::resetReason_t::GLITCH_RESET;
+      
   #endif
 
   if (hw_ready || device_init_done) {
@@ -1390,6 +1442,27 @@ void validate_status() {
     led_indicate_boot_error();
   }
 
+  #if MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
+  // RP2XXX uses enumeration instead of bit flags
+  if (boot_flags == F_POR || boot_flags == F_UNK) {
+    boot_vector = START_FROM_POWERON;
+  } else if (boot_flags == F_BOR || boot_flags == F_GLT) {
+    boot_vector = START_FROM_BROWNOUT;
+  } else if (boot_flags == F_WDR || boot_flags == F_RST || boot_flags == F_RUN) {
+    boot_vector = START_FROM_BOOTLOADER;
+  } else if (boot_flags == F_DBG) {
+    boot_vector = START_FROM_JTAG;
+  } else {
+      Serial.write("Error, indeterminate boot vector\r\n");
+      #if HAS_DISPLAY
+        if (disp_ready) {
+          device_init_done = true;
+          update_display();
+        }
+      #endif
+      led_indicate_boot_error();
+  }
+  #else
   if (boot_flags & (1<<F_POR)) {
     boot_vector = START_FROM_POWERON;
   } else if (boot_flags & (1<<F_BOR)) {
@@ -1406,6 +1479,7 @@ void validate_status() {
       #endif
       led_indicate_boot_error();
   }
+  #endif
 
   if (boot_vector == START_FROM_BOOTLOADER || boot_vector == START_FROM_POWERON) {
     if (eeprom_lock_set()) {
@@ -1535,6 +1609,22 @@ void loop() {
         kiss_indicate_stat_snr(interface_obj[packet_interface]);
         kiss_write_packet(packet_interface);
       }
+
+    #elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
+      modem_packet_t *modem_packet = NULL;
+      if(modem_packet_queue && xQueueReceive(modem_packet_queue, &modem_packet, 0) == pdTRUE && modem_packet) {
+        uint8_t packet_interface = modem_packet->interface;
+        read_len[packet_interface] = modem_packet->len;
+        last_rssi = modem_packet->rssi;
+        last_snr_raw = modem_packet->snr_raw;
+        memcpy(&pbuf, modem_packet->data, modem_packet->len);
+        free(modem_packet);
+        modem_packet = NULL;
+
+        kiss_indicate_stat_rssi(interface_obj[packet_interface]);
+        kiss_indicate_stat_snr(interface_obj[packet_interface]);
+        kiss_write_packet(packet_interface);
+      }
     #endif
 
     bool ready = false;
@@ -1633,6 +1723,12 @@ void loop() {
       } else {
         memory_low = false;
       }
+    #elif PLATFORM == PLATFORM_RP2XXX
+      if (rp2040.getFreeHeap() < 8192) {
+        kiss_indicate_error(ERROR_MEMORY_LOW); memory_low = false;
+      } else {
+        memory_low = false;
+      }
     #else
       kiss_indicate_error(ERROR_MEMORY_LOW); memory_low = false;
     #endif
@@ -1666,6 +1762,50 @@ void sleep_now() {
       #endif
       esp_sleep_enable_ext0_wakeup(PIN_WAKEUP, WAKEUP_LEVEL);
       esp_deep_sleep_start();
+    #elif PLATFORM == PLATFORM_RP2XXX
+      #if HAS_DISPLAY == true
+      if (disp_ready)
+        update_display(true);
+      #endif
+      #if PIN_DISP_SLEEP >= 0
+        pinMode(PIN_DISP_SLEEP, OUTPUT);
+        digitalWrite(PIN_DISP_SLEEP, DISP_SLEEP_LEVEL);
+      #endif
+      #if HAS_BLUETOOTH || HAS_BLE == true
+        bt_stop();
+        delay(100);
+      #endif
+      gpio_init(PIN_WAKEUP);
+      gpio_set_input_enabled(PIN_WAKEUP, true);
+      gpio_set_pulls(PIN_WAKEUP, true, false);
+      gpio_set_dormant_irq_enabled(PIN_WAKEUP, GPIO_IRQ_EDGE_FALL, true);
+      Serial.end();
+      USB.disconnect();
+      // TODO: Determine if this is really necessary. -sergds
+      // Switch clock to pure XOSC and shutdown PLLs to prevent losing lock (RP2350 Datasheet p. 490)
+      clock_configure(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ, XOSC_HZ);
+      clock_configure(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, XOSC_HZ, XOSC_HZ);
+      clock_configure(clk_peri, 0, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, XOSC_HZ, XOSC_HZ);
+      clock_stop(clk_adc);
+      clock_stop(clk_usb);
+      #if MCU_VARIANT == MCU_RP235X
+      clock_stop(clk_hstx);
+      #endif
+      #if MCU_VARIANT == MCU_RP2040
+      clock_stop(clk_rtc);
+      #endif
+      pll_deinit(pll_sys);
+      pll_deinit(pll_usb);
+
+      xosc_dormant();
+
+      gpio_acknowledge_irq(PIN_WAKEUP, GPIO_IRQ_EDGE_FALL);
+      runtime_init_clocks();
+      set_sys_clock_khz(F_CPU / 1000, true);
+      USB.connect();
+      Serial.begin();
+      update_display();
+      
     #elif PLATFORM == PLATFORM_NRF52
       #if BOARD_MODEL == BOARD_HELTEC_T114
         npset(0,0,0);
@@ -1697,6 +1837,14 @@ void button_event(uint8_t event, unsigned long duration) {
           #endif
           console_active = true;
           console_start();
+        #elif PLATFORM == PLATFORM_RP2XXX
+          #if HAS_DISPLAY == true
+          update_display(true);
+          #endif
+          #if HAS_BLUETOOTH || HAS_BLE == true
+            bt_stop();
+          #endif
+          rom_reset_usb_boot(0, 0);
         #endif
       } else if (duration > 5000) {
         #if HAS_BLUETOOTH || HAS_BLE
