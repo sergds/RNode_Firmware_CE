@@ -330,7 +330,7 @@ uint8_t display_contrast = 0x00;
   }
 #endif
 
-// TODO: Delete this after bluetooth is implemented on RP2 -sergds
+// These are not defined on boards without BT.
 #if HAS_BLUETOOTH == false && HAS_BLE == false
 char bt_devname[11];
 char bt_dh[16];
@@ -401,7 +401,7 @@ bool display_init() {
       Wire.begin(SDA_OLED, SCL_OLED);
     #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
       OLEDWire.begin();
-      // TODO: Delete me and following code after bluetooth is implemented on RP2 -sergds
+      // On RP boards without bluetooth board's uid is used instead of device hash.
       #if HAS_BLUETOOTH == false && HAS_BLE == false
       pico_unique_board_id_t pico_id;
       pico_get_unique_board_id(&pico_id);

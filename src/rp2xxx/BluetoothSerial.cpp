@@ -13,7 +13,6 @@
 #include <btstack.h>
 #include "btstack_defines.h"
 #include "btstack_event.h"
-#include "btstack_undefs.h"
 #include "classic/rfcomm.h"
 #include "gap.h"
 #include <cstdint>
@@ -62,9 +61,6 @@ bool BluetoothSerial::applyBondable() {
 }
 
 bool BluetoothSerial::setBondable(bool isBondable) {
-    // if (!_running) {
-    //     return false;
-    // }
     _isBondable = isBondable;
     return applyBondable();
 }
@@ -125,6 +121,7 @@ int BluetoothSerial::read(void) {
 }
 
 void BluetoothSerial::flush(void) {
+    BluetoothLock l;
     TRACELOG("Requesting SEND NOW");
     rfcomm_request_can_send_now_event(_rfcommChannelID);
     while (_connected && _txLen) {
@@ -149,7 +146,6 @@ size_t BluetoothSerial::write(uint8_t chr) {
 
 size_t BluetoothSerial::write(const uint8_t *buffer, size_t size) {
     CoreMutex cmtx(&_mtx);
-    // BluetoothLock l;
     if (!_running || !cmtx || !size || !_connected)
         return 0;
     if (_txLen + size > 1024) {
@@ -161,7 +157,6 @@ size_t BluetoothSerial::write(const uint8_t *buffer, size_t size) {
     memcpy((uint8_t*)_txBuf + _txLen, buffer, size);
     _txLen += size;
 
-    // flush();
     return size;
 };
 

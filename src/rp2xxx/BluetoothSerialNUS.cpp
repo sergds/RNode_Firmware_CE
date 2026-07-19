@@ -19,7 +19,6 @@
 #include "bluetooth_data_types.h"
 #include "btstack_defines.h"
 #include "btstack_event.h"
-#include "btstack_undefs.h"
 #include "ble/gatt-service/nordic_spp_service_server.h"
 #include <cstdint>
 #include <cstdlib>
@@ -133,9 +132,6 @@ bool BluetoothSerialNUS::applyBondable() {
 }
 
 bool BluetoothSerialNUS::setBondable(bool isBondable) {
-    // if (!_running) {
-    //     return false;
-    // }
     _isBondable = isBondable;
     return applyBondable();
 }
@@ -192,7 +188,6 @@ int BluetoothSerialNUS::read(void) {
 void BluetoothSerialNUS::flush(void) {
     BluetoothLock l;
     TRACELOG("Requesting SEND NOW\r\n");
-    //delay(15);
     nordic_spp_service_server_request_can_send_now(&_sendRequest, _conHandle);
     while (_connected && _txLen) {
         delay(10);
@@ -233,9 +228,7 @@ size_t BluetoothSerialNUS::write(const uint8_t *buffer, size_t size) {
     for (int i = 0; i < size; i++) {TRACELOG("%02X", buffer[i]);}
     TRACELOG("\r\n");
     memcpy((uint8_t*)_txBuf + _txLen, buffer, size);
-    // _txBuf = buffer;
     _txLen += size;
-    // flush();
     return size;
 };
 

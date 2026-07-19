@@ -18,7 +18,6 @@
 #include <CoreMutex.h>
 #include <LocklessQueue.h>
 #include <btstack_defines.h>
-//#include "btstack_undefs.h" // needed because of hid conflicts with tinyusb
 
 // Reusing arduino-pico technique
 #define CCALLBACKNAME _CBRNODEBTUART

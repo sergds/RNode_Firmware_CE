@@ -40,7 +40,6 @@
     #include <BluetoothLock.h>
     #include <bluetooth.h>
     #include <gap.h>
-    //#include "src/rp2xxx/btstack_undefs.h"
     #if HAS_BLE
       #include "src/rp2xxx/BluetoothSerialNUS.h"
       #include <ble/sm.h>
