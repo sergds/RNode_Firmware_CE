@@ -16,7 +16,7 @@
 #include <Arduino.h>
 #include "../../Boards.h"
 
-#if PLATFORM != PLATFORM_NRF52
+#if PLATFORM != PLATFORM_NRF52 && PLATFORM != PLATFORM_RP2XXX
 #if HAS_BLE
 
 #include "BLESerial.h"

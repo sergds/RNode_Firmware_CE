@@ -5,7 +5,6 @@
 // Obviously still under the MIT license.
 
 #include "Radio.hpp"
-#include "esp32-hal-gpio.h"
 #include "src/misc/ModemISR.h"
 #include <cstdint>
 
