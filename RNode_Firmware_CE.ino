@@ -1800,7 +1800,6 @@ void sleep_now() {
       gpio_set_dormant_irq_enabled(PIN_WAKEUP, GPIO_IRQ_EDGE_FALL, true);
       Serial.end();
       USB.disconnect();
-      // TODO: Determine if this is really necessary. -sergds
       // Switch clock to pure XOSC and shutdown PLLs to prevent losing lock (RP2350 Datasheet p. 490)
       clock_configure(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ, XOSC_HZ);
       clock_configure(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, XOSC_HZ, XOSC_HZ);

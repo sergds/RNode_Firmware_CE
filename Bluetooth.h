@@ -36,25 +36,24 @@ BLEBas  blebas;
 bool SerialBT_init = false;
 
 #elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP2350
-#if HAS_BLUETOOTH || HAS_BLE == true
-#include <BluetoothLock.h>
-#include <bluetooth.h>
-#include <gap.h>
-//#include "src/rp2xxx/btstack_undefs.h"
-#if HAS_BLE
-#include "src/rp2xxx/BluetoothSerialNUS.h"
-#include <ble/sm.h>
-#include <ble/le_device_db.h>
-BluetoothSerialNUS SerialBT;
-#else
-#include "src/rp2xxx/BluetoothSerial.h"
-BluetoothSerial SerialBT;
-#endif
-#undef log_debug
-#undef log_error
-#undef log_info
-#include "src/misc/MD5.h"
-#endif
+  #if HAS_BLUETOOTH || HAS_BLE == true
+    #include <BluetoothLock.h>
+    #include <bluetooth.h>
+    #include <gap.h>
+    #if HAS_BLE
+      #include "src/rp2xxx/BluetoothSerialNUS.h"
+      #include <ble/sm.h>
+      #include <ble/le_device_db.h>
+      BluetoothSerialNUS SerialBT;
+    #else
+      #include "src/rp2xxx/BluetoothSerial.h"
+      BluetoothSerial SerialBT;
+    #endif
+    #undef log_debug
+    #undef log_error
+    #undef log_info
+    #include "src/misc/MD5.h"
+  #endif
 #endif
 
 
