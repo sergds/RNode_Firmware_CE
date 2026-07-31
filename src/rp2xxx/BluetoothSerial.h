@@ -33,6 +33,9 @@ class BluetoothSerial: HardwareSerial {
     bool setName(const char* name);
     bool setBondable(bool isBondable);
     void disconnect();
+    bd_addr_t* getLocalAddr() {
+        return &_local_addr;
+    }
     void setPairingCallback(void (*bt_confirm_pairing)(uint32_t)) {
         this->_bt_confirm_pairing = bt_confirm_pairing;
     }
@@ -83,6 +86,7 @@ class BluetoothSerial: HardwareSerial {
     //const void* _txBuf = nullptr;
     const void* _txBuf[1024];
     volatile uint16_t _txLen = 0;
+    bd_addr_t _local_addr = {0};
 
     void (*_bt_confirm_pairing)(uint32_t) = nullptr;
     void (*_bt_pairing_complete)(bool) = nullptr;

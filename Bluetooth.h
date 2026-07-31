@@ -704,9 +704,17 @@ char bt_devname[11];
       // TODO(rp2xxx): CYW43 is already initialized by arduino-pico board variant code. Double check it here. -sergds
       if (1) { // bluetooth initialized
         {
+          // Turns out, in btStack you have to have HCI initialized and working to get local address, this means we have to wait for bt driver to be brought up and then get addr.
+          SerialBT.begin();
+          bd_addr_t gap_addr = {0};
+          while (gap_addr[0] == 0) { // Wait for addr to be set
+            bd_addr_t* new_gap_addr_ptr = SerialBT.getLocalAddr();
+            for (int i = 0; i < BT_DEV_ADDR_LEN; ++i) {
+              gap_addr[i] = *new_gap_addr_ptr[i];
+            }
+          }
+          SerialBT.end();
           BluetoothLock l;
-          bd_addr_t gap_addr;
-          gap_local_bd_addr(gap_addr);
           char *data = (char*)malloc(BT_DEV_ADDR_LEN+1);
           for (int i = 0; i < BT_DEV_ADDR_LEN; i++) {
               data[i] = gap_addr[i];
