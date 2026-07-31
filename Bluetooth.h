@@ -35,7 +35,7 @@ BLEDis  bledis;
 BLEBas  blebas;
 bool SerialBT_init = false;
 
-#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP2350
+#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
   #if HAS_BLUETOOTH || HAS_BLE == true
     #include <BluetoothLock.h>
     #include <bluetooth.h>
@@ -628,7 +628,7 @@ char bt_devname[11];
       bt_disable_pairing();
     }
   }
-#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP2350
+#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
 #if HAS_BLUETOOTH || HAS_BLE == true
   void bt_confirm_pairing(uint32_t numVal) {
     display_unblank();

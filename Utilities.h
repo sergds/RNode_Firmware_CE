@@ -1646,7 +1646,7 @@ bool eeprom_model_valid() {
 	#elif BOARD_MODEL == BOARD_GENERIC_ESP32
 	if (model == MODEL_FF || model == MODEL_FD || model == MODEL_FE) {
 	#elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
-	if (model == MODEL_FC) {
+	if (model == MODEL_FC || model == MODEL_FA) {
 	#elif BOARD_MODEL == BOARD_RP2040_LORA
 	if (model == MODEL_FB) {
 	#else
