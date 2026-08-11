@@ -1566,7 +1566,7 @@
                     // SX1262
           {
               false, // DEFAULT_SPI
-              true, // HAS_TCXO
+              false, // HAS_TCXO
               true  // DIO2_AS_RF_SWITCH
           }
       };

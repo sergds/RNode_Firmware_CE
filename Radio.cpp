@@ -125,6 +125,11 @@ bool sx126x::preInit() {
     _spiModem->begin();
   #endif
 
+  // On this RP2040 board SX1262 does not finish initialization if it is reset before SPI is started.
+  #if BOARD_MODEL == BOARD_RP2040_LORA
+  reset();
+  #endif
+
   // check version (retry for up to 2 seconds)
   // TODO: Actually read version registers, not syncwords
   long start = millis();
@@ -732,6 +737,8 @@ void sx126x::enableTCXO() {
       uint8_t buf[4] = {MODE_TCXO_1_8V_6X, 0x00, 0x00, 0xFF};
     #elif BOARD_MODEL == BOARD_GENERIC_ESP32 || BOARD_VARIANT == MODEL_FD
       uint8_t buf[4] = {MODE_TCXO_1_8V_6X, 0x00, 0x00, 0xFF};
+    #elif BOARD_MODEL == BOARD_RP2040_LORA
+      uint8_t buf[4] = {MODE_TCXO_1_7V_6X, 0x00, 0x01, 0x40};
     #else
       uint8_t buf[4] = {0};
     #endif
