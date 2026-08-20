@@ -1562,11 +1562,14 @@
       const int pin_led_rx = 25;
       const int pin_led_tx = 25;
       const uint8_t interfaces[INTERFACE_COUNT] = {SX1262};
+      // Waveshare's schematics specify, that this board has TCXO, but it is not mentioned anywhere on their wiki and my unit seems to lack it as well.
+      // Still i enable tcxo here, and let my modified sx126x class to fallback to XTAL in case of XOSC error.
+      // TODO: Investigate futher and find out whether revisions with TCXO were actually produced.
       const bool interface_cfg[INTERFACE_COUNT][3] = { 
                     // SX1262
           {
               false, // DEFAULT_SPI
-              false, // HAS_TCXO
+              true, // HAS_TCXO
               true  // DIO2_AS_RF_SWITCH
           }
       };

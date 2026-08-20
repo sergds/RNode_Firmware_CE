@@ -48,6 +48,8 @@
 #define OP_RX_TX_FALLBACK_MODE_6X   0x93
 #define OP_REGULATOR_MODE_6X        0x96
 #define OP_CALIBRATE_IMAGE_6X       0x98
+#define OP_GET_DEVICE_ERRORS_6X     0x17
+#define OP_CLEAR_DEVICE_ERRORS_6X   0x07
 
 #define MASK_CALIBRATE_ALL          0x7f
 
@@ -389,6 +391,19 @@ int sx126x::begin()
   calibrate_image(_frequency);
 
   enableTCXO();
+  standby();
+  uint8_t deverr;
+  executeOpcodeRead(OP_GET_DEVICE_ERRORS_6X, &deverr, 1);
+  if (deverr & 0b00100000) {
+    // Failed to start TCXO, falling back to XTAL.
+    executeOpcodeRead(OP_CLEAR_DEVICE_ERRORS_6X, &deverr, 1);
+    reset();
+    waitOnBusy();
+    calibrate();
+    calibrate_image(_frequency);
+    _tcxo = false;
+    standby();
+  }
 
   loraMode();
   standby();
@@ -708,7 +723,12 @@ void sx126x::standby()
   // STDBY_RC
   byte = MODE_STDBY_RC_6X;
   }
-  executeOpcode(OP_STANDBY_6X, &byte, 1); 
+  standby(byte);
+}
+
+void sx126x::standby(uint8_t mode)
+{
+  executeOpcode(OP_STANDBY_6X, &mode, 1);
 }
 
 void sx126x::sleep()
@@ -738,7 +758,7 @@ void sx126x::enableTCXO() {
     #elif BOARD_MODEL == BOARD_GENERIC_ESP32 || BOARD_VARIANT == MODEL_FD
       uint8_t buf[4] = {MODE_TCXO_1_8V_6X, 0x00, 0x00, 0xFF};
     #elif BOARD_MODEL == BOARD_RP2040_LORA
-      uint8_t buf[4] = {MODE_TCXO_1_7V_6X, 0x00, 0x01, 0x40};
+      uint8_t buf[4] = {MODE_TCXO_1_8V_6X, 0x00, 0x01, 0x40};
     #else
       uint8_t buf[4] = {0};
     #endif

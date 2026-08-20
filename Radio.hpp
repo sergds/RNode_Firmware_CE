@@ -496,6 +496,7 @@ public:
 
   void receive(int size = 0);
   void standby();
+  void standby(uint8_t mode);
   void sleep();
 
   bool preInit();
