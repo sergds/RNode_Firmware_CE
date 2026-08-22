@@ -39,7 +39,7 @@ if tlv_base == 0 and hasBtstack:
     exit(1)
 
 with open(bin_path, "rb") as f:
-    hash: hashlib._Hash = hashlib.new("SHA256")
+    hash = hashlib.new("SHA256")
     skip: int = 0
 
     while True:

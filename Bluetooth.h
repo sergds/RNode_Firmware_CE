@@ -35,7 +35,7 @@
   BLEBas  blebas;
   bool SerialBT_init = false;
 
-#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP2350
+#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
   #if HAS_BLUETOOTH || HAS_BLE == true
     #include <BluetoothLock.h>
     #include <bluetooth.h>
@@ -58,7 +58,7 @@
 
 
 #define BT_PAIRING_TIMEOUT 35000
-#define BLE_FLUSH_TIMEOUT 20
+#define BLE_FLUSH_TIMEOUT 60
 uint32_t bt_pairing_started = 0;
 
 #define BT_DEV_ADDR_LEN 6
@@ -628,7 +628,7 @@ char bt_devname[11];
       bt_disable_pairing();
     }
   }
-#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP2350
+#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
 #if HAS_BLUETOOTH || HAS_BLE == true
   void bt_confirm_pairing(uint32_t numVal) {
     display_unblank();
@@ -704,9 +704,17 @@ char bt_devname[11];
       // TODO(rp2xxx): CYW43 is already initialized by arduino-pico board variant code. Double check it here. -sergds
       if (1) { // bluetooth initialized
         {
+          // In btStack you have to have HCI initialized and working to get local address, this means we have to wait for bt driver to be brought up and then get addr.
+          SerialBT.begin();
+          bd_addr_t gap_addr = {0};
+          while (gap_addr[0] == 0) { // Wait for addr to be set
+            bd_addr_t* new_gap_addr_ptr = SerialBT.getLocalAddr();
+            for (int i = 0; i < BT_DEV_ADDR_LEN; ++i) {
+              gap_addr[i] = *new_gap_addr_ptr[i];
+            }
+          }
+          SerialBT.end();
           BluetoothLock l;
-          bd_addr_t gap_addr;
-          gap_local_bd_addr(gap_addr);
           char *data = (char*)malloc(BT_DEV_ADDR_LEN+1);
           for (int i = 0; i < BT_DEV_ADDR_LEN; i++) {
               data[i] = gap_addr[i];

@@ -217,6 +217,14 @@ void BluetoothSerial::packetHandler(uint8_t type, uint16_t channel, uint8_t *pac
         case HCI_EVENT_PACKET: {
             TRACELOG("HCI EVENT: %0X\r\n", hci_event_packet_get_type(packet));
             switch (hci_event_packet_get_type(packet)) {
+                case BTSTACK_EVENT_STATE: {
+                    switch (btstack_event_state_get_state(packet)) {
+                        case HCI_STATE_WORKING: {
+                            gap_local_bd_addr(_local_addr);
+                            TRACELOG("Got addr: %x:%x:%x:%x:%x:%x\r\n", _local_addr[0], _local_addr[1], _local_addr[2], _local_addr[3], _local_addr[4], _local_addr[5]);
+                        }
+                    }
+                }
                 case HCI_EVENT_PIN_CODE_REQUEST: {
                     hci_event_pin_code_request_get_bd_addr(packet, event_addr);
                     // TRACELOG("Attempted a legacy pair!\r\n");

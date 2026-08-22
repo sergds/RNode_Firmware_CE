@@ -124,6 +124,11 @@ bool sx126x::preInit() {
     _spiModem->begin();
   #endif
 
+  // On this RP2040 board SX1262 does not finish initialization if it is reset before SPI is started.
+  #if BOARD_MODEL == BOARD_RP2040_LORA
+  reset();
+  #endif
+
   // check version (retry for up to 2 seconds)
   // TODO: Actually read version registers, not syncwords
   long start = millis();

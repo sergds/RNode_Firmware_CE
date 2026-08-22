@@ -312,12 +312,17 @@ upload-pico2:
 upload-picow:
 	picotool load -fxv build/rp2040.rp2040.rpipicow/RNode_Firmware_CE.ino.uf2
 	@sleep 1.5
-	rnodeconf /dev/ttyACM0 -H $$(python rp2xxx_hash.py build/rp2040.rp2040.rpipicow | tail -n 1)
+	rnodeconf /dev/ttyACM0 -H $$(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipicow | tail -n 1)
+
+upload-pico2w:
+	picotool load -fxv build/rp2040.rp2040.rpipico2w/RNode_Firmware_CE.ino.uf2
+	@sleep 1.5
+	rnodeconf /dev/ttyACM0 -H $$(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipico2w | tail -n 1)
 
 upload-rp2040_lora:
 	picotool load -fxv build/rp2040.rp2040.rpipico/RNode_Firmware_CE.ino.uf2
 	@sleep 1.5
-	rnodeconf /dev/ttyACM0 -H $$(python rp2xxx_hash.py build/rp2040.rp2040.rpipico | tail -n 1)
+	rnodeconf /dev/ttyACM0 -H $$(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipico | tail -n 1)
 
 release:  console-site spiffs-image $(shell grep ^release- Makefile | cut -d: -f1)
 
