@@ -67,6 +67,8 @@ prep-rp2xxx:
 	arduino-cli lib install "Adafruit NeoPixel"
 	arduino-cli lib install "XPowersLib"
 	arduino-cli lib install "Crypto"
+	pip install pyserial rns --upgrade --user --break-system-packages # This looks scary, but it's actually just telling pip to install packages as a user instead of trying to install them systemwide, which bypasses the "externally managed environment" error.
+	pip install pyelftools --upgrade --user --break-system-packages # This looks scary, but it's actually just telling pip to install packages as a user instead of trying to install them systemwide, which bypasses the "externally managed environment" error.
 
 prep-esp32:
 	arduino-cli core install esp32:esp32@$(ARDUINO_ESP_CORE_VER) --config-file arduino-cli.yaml
