@@ -721,7 +721,8 @@ int8_t  led_standby_direction = 0;
                     led_rx_off();
                 #endif
             #else
-                led_rx_off();
+                if (pin_led_rx != pin_led_tx) // On single LED boards like rp2040-lora this will shut off LED almost instantly
+                    led_rx_off();
             #endif
         }
     }
