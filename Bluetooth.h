@@ -58,7 +58,11 @@ bool SerialBT_init = false;
 
 
 #define BT_PAIRING_TIMEOUT 35000
+#if PLATFORM == PLATFORM_RP2XXX
 #define BLE_FLUSH_TIMEOUT 60
+#else
+#define BLE_FLUSH_TIMEOUT 20
+#endif
 uint32_t bt_pairing_started = 0;
 
 #define BT_DEV_ADDR_LEN 6
