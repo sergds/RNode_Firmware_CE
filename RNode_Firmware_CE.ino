@@ -15,8 +15,6 @@
 
 #include <Arduino.h>
 #include <SPI.h>
-#include <sys/_types.h>
-#include "Radio.hpp"
 #include "Utilities.h"
 
 #if PLATFORM == PLATFORM_RP2XXX
