@@ -704,8 +704,6 @@ char bt_devname[11];
       } else {
         bt_enabled = false;
       }
-      // TODO(rp2xxx): Setup callbacks in custom bluetooth serial implementation
-      // TODO(rp2xxx): CYW43 is already initialized by arduino-pico board variant code. Double check it here. -sergds
       if (1) { // bluetooth initialized
         {
           // In btStack you have to have HCI initialized and working to get local address, this means we have to wait for bt driver to be brought up and then get addr.
