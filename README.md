@@ -4,12 +4,45 @@ Experimental port for pico chip family based on my personal branch with adapted 
 Compatible RNodeInterface and rnodeconf are available [HERE](https://forge.sergds.xyz/sergds/Reticulum/src/branch/rp2xxx)
 
 ## Implemented boards:
+### BOARD_RP2040_LORA (Waveshare RP2040-LoRa)
+A somewhat quirky and decently cheap LoRa board from Waveshare, doesn't actually has a TCXO, even though schematics suggest otherwise.
+Has a SX1262 modem IC.
+
+### Build and flash
+
+Build insctuctions assume a POSIX compliant shell and environment, on Windows you can use MSYS2 and replace `/dev/ttyACM0` with COM port of your RP2 board.
+
+You need to have picotool installed and be available in PATH to be able to upload firmware via make. Download it [here](https://github.com/raspberrypi/pico-sdk-tools/releases/latest) or use your package manager.
+
+Prepare build environment:
+```shell
+python -m venv .venv
+source .venv/bin/activate
+make prep-rp2xxx
+```
+
+Build it and upload:
+```shell
+make firmware-rp2040_lora
+make upload-rp2040_lora
+```
+
+> Pro tip:
+> you can specify (a compatible) rnodeconf to execute in make like this:
+> 
+> `make upload-pico2 RNODECONFEXE="python ~/Reticulum/RNS/Utilities/rnodeconf.py"`
+
+Provision EEPROM:
+```shell
+rnodeconf /dev/ttyACM0 -r --platform 60 --product 66 --model fb --hwrev 01
+```
+
 ### BOARD_GENERIC_RP2XXX (Generic RP2XXX Board)
-A generic Pico-based build. 1 radio interface, LR1121 modem. i2c1 is dedicated to OLED.
+A generic Pico-based DIY RNode. 1 radio interface, LR1121 modem. i2c1 is dedicated to OLED. Served as a bringup board for this project.
 
-Can be a `pico2` or `picow` if you have Pico W and want bluetooth (BLE Enabled by default).
+Can be a `pico2` or `picow`/`pico2w` if you have Pico W and want bluetooth (BLE Enabled by default, BT Classic can be enabled in Boards.h instead of BLE).
 
-LoRA module is Waveshare Core1121-HF.
+Tested LoRA module is Waveshare Core1121-HF.
 
 ### Pinout:
 
@@ -29,7 +62,9 @@ LoRA module is Waveshare Core1121-HF.
 
 ### Build and flash:
 
-You need to have picotool installed and be available in PATH to be able to upload firmware via make. Download it [here](https://github.com/raspberrypi/pico-sdk-tools/releases/latest).
+Build insctuctions assume a POSIX compliant shell and environment, on Windows you can use MSYS2 and replace `/dev/ttyACM0` with COM port of your RP2 board.
+
+You need to have picotool installed and be available in PATH to be able to upload firmware via make. Download it [here](https://github.com/raspberrypi/pico-sdk-tools/releases/latest) or use your package manager.
 
 Prepare build environment:
 ```shell
@@ -42,13 +77,13 @@ make prep-rp2xxx
 
 Build it and upload:
 ```shell
-# replace pico2 with picow for Pico W boards
+# replace pico2 with picow/pico2w for Pico W boards
 make firmware-pico2
 make upload-pico2
 ```
 
 > Pro tip:
-> you can specify rnodeconf to execute in make like this:
+> you can specify (a compatible) rnodeconf to execute in make like this:
 > 
 > `make upload-pico2 RNODECONFEXE="python ~/Reticulum/RNS/Utilities/rnodeconf.py"`
 
@@ -77,8 +112,8 @@ rnodeconf /dev/ttyACM0 -H $(python rp2xxx_hash.py build/rp2040.rp2040.rpipicow |
 - [X] Display, input
 - [X] Sleep mode (implemented via DORMANT mode)
 - [X] Device validation (firmware validation via hashing)
-- [ ] Bluetooth Classic (Pico W, Boards with RM2)
-- [ ] Bluetooth Low Energy (Pico W, Boards with RM2)
+- [X] Bluetooth Classic (Pico W, Boards with RM2)
+- [X] Bluetooth Low Energy (Pico W, Boards with RM2)
 
 ### RP2040: Works, tested. Validation is slower because no crypto hw and no dsp instructions
 - [X] Boots up, radio interface works
@@ -89,8 +124,8 @@ rnodeconf /dev/ttyACM0 -H $(python rp2xxx_hash.py build/rp2040.rp2040.rpipicow |
 - [X] Bluetooth Low Energy (Pico W, Boards with RM2)
 
 ### Bluetooth support
-Bluetooth works, but not very well (especially in terms of discovery and connection initiation) even after 4 days of working on/debugging it.
-Both Bluetooth Classic (BRE/DR) and Bluetooth Low Energy (BLE) do work. Connection is stable once you connect, though initial pairing and bonding with RNode is sometimes buggy. For Bluetooth Classic you need to pair RNode in bluetooth settings before you can use it in Columba. 
+Bluetooth works, but not very well (especially in terms of discovery and connection initiation) even after days of working on/debugging it. The firmware of CYW43 can hang, presumably if too many packets were sent in a short time, taking up the whole bluetooth stack with it. I still don't know what exactly causes the core problem.
+Both Bluetooth Classic (BRE/DR) and Bluetooth Low Energy (BLE) do work. Connection is usually stable once you connect, though initial pairing and bonding with RNode is sometimes buggy. For Bluetooth Classic you need to pair RNode in bluetooth settings before you can use it in Columba. Testing showed that Columba with Kotlin stack works better with BT on Pico W.
 
 If you reflash the firmware all link keys (BRE/DR) or security manager database (BLE) will be wiped, and you will have to remove your rnode in bluetooth settings and pair again.
 
