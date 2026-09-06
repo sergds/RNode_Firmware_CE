@@ -15,6 +15,9 @@
 
 #ifdef ARDUINO_ARCH_RP2040
 #include "RP2040Support.h"
+#if CYW43_ENABLE_BLUETOOTH
+#include "pico/cyw43_arch.h"
+#endif
 #if !__FREERTOS
 #include "src/rp2xxx/CriticalSection.h"
 #include "src/rp2xxx/xQueue.h"
@@ -386,11 +389,18 @@ uint8_t boot_vector = 0x00;
 		void led_tx_off() { npset(0, 0, 0); }
 		void led_id_on()  { npset(0x90, 0, 0x70); }
 		void led_id_off() { npset(0, 0, 0); }
-	#elif BOARD_MODEL == BOARD_GENERIC_RP2XXX || BOARD_MODEL == BOARD_RP2040_LORA
+	#elif !CYW43_ENABLE_BLUETOOTH
 		void led_rx_on()  { digitalWrite(pin_led_rx, HIGH); }
 		void led_rx_off() {	digitalWrite(pin_led_rx, LOW); }
 		void led_tx_on()  { digitalWrite(pin_led_tx, HIGH); }
 		void led_tx_off() { digitalWrite(pin_led_tx, LOW); }
+		void led_id_on()  { }
+		void led_id_off() { }
+	#else
+		void led_rx_on()  { cyw43_arch_gpio_put(pin_led_rx, HIGH); }
+		void led_rx_off() {	cyw43_arch_gpio_put(pin_led_rx, LOW); }
+		void led_tx_on()  { cyw43_arch_gpio_put(pin_led_tx, HIGH); }
+		void led_tx_off() { cyw43_arch_gpio_put(pin_led_tx, LOW); }
 		void led_id_on()  { }
 		void led_id_off() { }
 	#endif
@@ -720,7 +730,8 @@ int8_t  led_standby_direction = 0;
                     led_rx_off();
                 #endif
             #else
-                led_rx_off();
+                if (pin_led_rx != pin_led_tx) // On single LED boards like rp2040-lora this will shut off LED almost instantly
+                    led_rx_off();
             #endif
         }
     }
@@ -1646,7 +1657,7 @@ bool eeprom_model_valid() {
 	#elif BOARD_MODEL == BOARD_GENERIC_ESP32
 	if (model == MODEL_FF || model == MODEL_FD || model == MODEL_FE) {
 	#elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
-	if (model == MODEL_FC) {
+	if (model == MODEL_FC || model == MODEL_FA) {
 	#elif BOARD_MODEL == BOARD_RP2040_LORA
 	if (model == MODEL_FB) {
 	#else

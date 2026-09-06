@@ -280,8 +280,8 @@ bool device_firmware_ok() {
 #if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
 bool device_init() {
   #if VALIDATE_FIRMWARE
+  // Not every RP board has a bluetooth module.
   #if MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040 && (HAS_BLUETOOTH == 0 || HAS_BLE == 0)
-  // TODO: check this when bluetooth is implemented -sergds
   if (1) {
   #else
   if (bt_ready) {

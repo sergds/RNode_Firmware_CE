@@ -15,8 +15,6 @@
 
 #include <Arduino.h>
 #include <SPI.h>
-#include <sys/_types.h>
-#include "Radio.hpp"
 #include "Utilities.h"
 
 #if PLATFORM == PLATFORM_RP2XXX
@@ -220,7 +218,7 @@ void setup() {
     boot_seq();
   #endif
 
-  #if BOARD_MODEL != BOARD_RAK4631 && BOARD_MODEL != BOARD_HELTEC_T114 && BOARD_MODEL != BOARD_TECHO && BOARD_MODEL != BOARD_T3S3 && BOARD_MODEL != BOARD_TBEAM_S_V1 && BOARD_MODEL != BOARD_OPENCOM_XL && BOARD_MODEL != BOARD_GENERIC_RP2XXX && BOARD_MODEL != BOARD_RP2040_LORA
+  #if BOARD_MODEL != BOARD_RAK4631 && BOARD_MODEL != BOARD_HELTEC_T114 && BOARD_MODEL != BOARD_TECHO && BOARD_MODEL != BOARD_T3S3 && BOARD_MODEL != BOARD_TBEAM_S_V1 && BOARD_MODEL != BOARD_OPENCOM_XL && BOARD_MODEL != BOARD_GENERIC_RP2XXX && BOARD_MODEL != BOARD_RP2040_LORA || defined (DEBUG)
   // Some boards need to wait until the hardware UART is set up before booting
   // the full firmware. In the case of the RAK4631/TECHO, the line below will wait
   // until a serial connection is actually established with a master. Thus, it
@@ -1800,7 +1798,6 @@ void sleep_now() {
       gpio_set_dormant_irq_enabled(PIN_WAKEUP, GPIO_IRQ_EDGE_FALL, true);
       Serial.end();
       USB.disconnect();
-      // TODO: Determine if this is really necessary. -sergds
       // Switch clock to pure XOSC and shutdown PLLs to prevent losing lock (RP2350 Datasheet p. 490)
       clock_configure(clk_ref, CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC, 0, XOSC_HZ, XOSC_HZ);
       clock_configure(clk_sys, CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLK_REF, 0, XOSC_HZ, XOSC_HZ);

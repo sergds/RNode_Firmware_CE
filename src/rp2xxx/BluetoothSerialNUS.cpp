@@ -19,7 +19,6 @@
 #include "bluetooth_data_types.h"
 #include "btstack_defines.h"
 #include "btstack_event.h"
-#include "btstack_undefs.h"
 #include "ble/gatt-service/nordic_spp_service_server.h"
 #include <cstdint>
 #include <cstdlib>
@@ -28,6 +27,7 @@
 #include <SerialUSB.h>
 #include "RNodeBluetoothSerial.h"
 #include "gap.h"
+#include "hardware/watchdog.h"
 
 #define ENSURE_AD_ELEMENT(appendFcn, type) if (!appendFcn) {Serial.printf("Failed to append AD element type=%02x", type);}
 
@@ -133,9 +133,6 @@ bool BluetoothSerialNUS::applyBondable() {
 }
 
 bool BluetoothSerialNUS::setBondable(bool isBondable) {
-    // if (!_running) {
-    //     return false;
-    // }
     _isBondable = isBondable;
     return applyBondable();
 }
@@ -151,8 +148,13 @@ void BluetoothSerialNUS::end() {
     }
     setBondable(false);
     _running = false;
+    _txLen = 0;
     hci_power_control(HCI_POWER_OFF);
+    _connected = false;
+    _conHandle = HCI_CON_HANDLE_INVALID;
     delete _queue;
+    free(_txBuf);
+    _txBuf = nullptr;
 }
 
 int BluetoothSerialNUS::availableForWrite(void) {
@@ -192,10 +194,23 @@ int BluetoothSerialNUS::read(void) {
 void BluetoothSerialNUS::flush(void) {
     BluetoothLock l;
     TRACELOG("Requesting SEND NOW\r\n");
-    //delay(15);
     nordic_spp_service_server_request_can_send_now(&_sendRequest, _conHandle);
-    while (_connected && _txLen) {
-        delay(10);
+    while (_connected && _txLen > 0) {
+        delay(100);
+        _flushingTime += 100;
+        // can send event didn't happen in 1 second. drop a dead connection. After 5 seconds restart bluetooth if bluetooth is hung
+        if (_flushingTime >= 5000) {
+            TRACELOG("BT hung. Reset.\r\n");
+            // TODO: Find a way to reset cyw43 itself, without breaking driver.
+            watchdog_reboot(0, 0, 10);
+            break;
+        } else if (_flushingTime >= 1000) {
+            TRACELOG("Can not send for too long, disconnect!\r\n");
+            disconnect();
+            lastFlushTime = millis();
+            _txLen = 0;
+            break;
+        }
     }
 }
 
@@ -216,7 +231,9 @@ size_t BluetoothSerialNUS::write(uint8_t chr) {
 
 void BluetoothSerialNUS::nordicCanSend(void* context) {
     TRACELOG("CAN SEND NOW\r\n");
+    #if DEBUG == 1
     for (int i = 0; i < _txLen; i++) {TRACELOG("TX: %c\t%02x\r\n", ((const uint8_t*)_txBuf)[i], ((const uint8_t*)_txBuf)[i]);}
+    #endif
     nordic_spp_service_server_send(_conHandle, (const uint8_t*)_txBuf, _txLen);
     _txLen = 0;
     lastFlushTime = millis();
@@ -226,16 +243,16 @@ size_t BluetoothSerialNUS::write(const uint8_t *buffer, size_t size) {
     CoreMutex cmtx(&_mtx);
      if (!_running || !cmtx || !size || !_connected)
         return 0;
-    if (_txLen + size > 1024) {
+    if (_txLen + size > _fifoSize) {
         flush();
     }
     TRACELOG("TX Written: ");
+    #if DEBUG == 1
     for (int i = 0; i < size; i++) {TRACELOG("%02X", buffer[i]);}
+    #endif
     TRACELOG("\r\n");
     memcpy((uint8_t*)_txBuf + _txLen, buffer, size);
-    // _txBuf = buffer;
     _txLen += size;
-    // flush();
     return size;
 };
 
@@ -244,6 +261,9 @@ void BluetoothSerialNUS::begin(unsigned long baudrate, uint16_t config) {
         end();
 
     _queue = new LocklessQueue<uint8_t>(_fifoSize);
+    if (_txBuf == nullptr) {
+        _txBuf = (uint8_t*)malloc(sizeof(uint8_t)*_fifoSize);
+    }
 
     _overflow = false;
     _connected = false;
@@ -290,6 +310,14 @@ void BluetoothSerialNUS::packetHandler(uint8_t type, uint16_t channel, uint8_t *
         case HCI_EVENT_PACKET: {
             TRACELOG("HCI EVENT: %0X\r\n", hci_event_packet_get_type(packet));
             switch (hci_event_packet_get_type(packet)) {
+                case BTSTACK_EVENT_STATE: {
+                    switch (btstack_event_state_get_state(packet)) {
+                        case HCI_STATE_WORKING: {
+                            gap_local_bd_addr(_local_addr);
+                            TRACELOG("Got addr: %x:%x:%x:%x:%x:%x\r\n", _local_addr[0], _local_addr[1], _local_addr[2], _local_addr[3], _local_addr[4], _local_addr[5]);
+                        }
+                    }
+                }
                 case HCI_EVENT_GATTSERVICE_META: {
                     switch (hci_event_gattservice_meta_get_subevent_code(packet)) {
                         case GATTSERVICE_SUBEVENT_SPP_SERVICE_CONNECTED: {

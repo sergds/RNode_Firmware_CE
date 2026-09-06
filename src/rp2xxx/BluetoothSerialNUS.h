@@ -18,7 +18,6 @@
 #include <CoreMutex.h>
 #include <LocklessQueue.h>
 #include <btstack_defines.h>
-//#include "btstack_undefs.h" // needed because of hid conflicts with tinyusb
 
 // Reusing arduino-pico technique
 #define CCALLBACKNAME _CBRNODEBTUART
@@ -48,6 +47,9 @@ class BluetoothSerialNUS: HardwareSerial {
     bool setName(const char* name);
     bool setBondable(bool isBondable);
     void disconnect();
+    bd_addr_t* getLocalAddr() {
+        return &_local_addr;
+    }
     void setPairingCallback(void (*bt_confirm_pairing)(uint32_t)) {
         this->_bt_confirm_pairing = bt_confirm_pairing;
     }
@@ -105,9 +107,11 @@ class BluetoothSerialNUS: HardwareSerial {
     bool _isBondable = false;
     hci_con_handle_t _conHandle = HCI_CON_HANDLE_INVALID;
     btstack_context_callback_registration_t _sendRequest;
-    const void* _txBuf[1024];
-    // const void* _txBuf = nullptr;
+    // const uint8_t _txBuf[2048] = {0};
+    uint8_t* _txBuf = nullptr;
     volatile uint16_t _txLen = 0;
+    uint16_t _flushingTime = 0;
+    bd_addr_t _local_addr = {0};
 
     void (*_bt_confirm_pairing)(uint32_t) = nullptr;
     void (*_bt_pairing_complete)(bool) = nullptr;

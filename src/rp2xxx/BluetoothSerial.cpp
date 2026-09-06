@@ -13,7 +13,6 @@
 #include <btstack.h>
 #include "btstack_defines.h"
 #include "btstack_event.h"
-#include "btstack_undefs.h"
 #include "classic/rfcomm.h"
 #include "gap.h"
 #include <cstdint>
@@ -62,9 +61,6 @@ bool BluetoothSerial::applyBondable() {
 }
 
 bool BluetoothSerial::setBondable(bool isBondable) {
-    // if (!_running) {
-    //     return false;
-    // }
     _isBondable = isBondable;
     return applyBondable();
 }
@@ -125,6 +121,7 @@ int BluetoothSerial::read(void) {
 }
 
 void BluetoothSerial::flush(void) {
+    BluetoothLock l;
     TRACELOG("Requesting SEND NOW");
     rfcomm_request_can_send_now_event(_rfcommChannelID);
     while (_connected && _txLen) {
@@ -149,7 +146,6 @@ size_t BluetoothSerial::write(uint8_t chr) {
 
 size_t BluetoothSerial::write(const uint8_t *buffer, size_t size) {
     CoreMutex cmtx(&_mtx);
-    // BluetoothLock l;
     if (!_running || !cmtx || !size || !_connected)
         return 0;
     if (_txLen + size > 1024) {
@@ -161,7 +157,6 @@ size_t BluetoothSerial::write(const uint8_t *buffer, size_t size) {
     memcpy((uint8_t*)_txBuf + _txLen, buffer, size);
     _txLen += size;
 
-    // flush();
     return size;
 };
 
@@ -222,6 +217,14 @@ void BluetoothSerial::packetHandler(uint8_t type, uint16_t channel, uint8_t *pac
         case HCI_EVENT_PACKET: {
             TRACELOG("HCI EVENT: %0X\r\n", hci_event_packet_get_type(packet));
             switch (hci_event_packet_get_type(packet)) {
+                case BTSTACK_EVENT_STATE: {
+                    switch (btstack_event_state_get_state(packet)) {
+                        case HCI_STATE_WORKING: {
+                            gap_local_bd_addr(_local_addr);
+                            TRACELOG("Got addr: %x:%x:%x:%x:%x:%x\r\n", _local_addr[0], _local_addr[1], _local_addr[2], _local_addr[3], _local_addr[4], _local_addr[5]);
+                        }
+                    }
+                }
                 case HCI_EVENT_PIN_CODE_REQUEST: {
                     hci_event_pin_code_request_get_bd_addr(packet, event_addr);
                     // TRACELOG("Attempted a legacy pair!\r\n");
