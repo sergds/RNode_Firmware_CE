@@ -332,12 +332,6 @@ uint8_t display_contrast = 0x00;
   }
 #endif
 
-// These are not defined on boards without BT.
-#if HAS_BLUETOOTH == false && HAS_BLE == false
-char bt_devname[11];
-char bt_dh[16];
-#endif
-
 bool display_init() {
   #if HAS_DISPLAY
     #if BOARD_MODEL == BOARD_RNODE_NG_20 || BOARD_MODEL == BOARD_LORA32_V2_0
@@ -403,13 +397,6 @@ bool display_init() {
       Wire.begin(SDA_OLED, SCL_OLED);
     #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
       OLEDWire.begin();
-      // On RP boards without bluetooth board's uid is used instead of device hash.
-      #if HAS_BLUETOOTH == false && HAS_BLE == false
-      pico_unique_board_id_t pico_id;
-      pico_get_unique_board_id(&pico_id);
-      memcpy(bt_dh+PICO_UNIQUE_BOARD_ID_SIZE_BYTES, pico_id.id, PICO_UNIQUE_BOARD_ID_SIZE_BYTES);
-      sprintf(bt_devname, "RNode %02X%02X", bt_dh[14], bt_dh[15]);
-      #endif
     #endif
 
     #if HAS_EEPROM
@@ -924,10 +911,8 @@ void update_stat_area() {
   }
 }
 
-#if HAS_BLUETOOTH || HAS_BLE == true
 extern char bt_devname[11];
 extern char bt_dh[16];
-#endif
 
 void draw_disp_area() {
   if (!device_init_done || firmware_update_mode) {

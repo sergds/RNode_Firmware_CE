@@ -93,6 +93,12 @@ bool fw_signature_validated = true;
 #define DEV_FWHASH_OFFSET EEPROM_SIZE-EEPROM_RESERVED-DEV_SIG_LEN-DEV_HASH_LEN
 #define dev_fwhash_addr(a) (a+DEV_FWHASH_OFFSET)
 
+// These are not defined on boards without BT, but are still used on rp2xxx to store device uid.
+#if HAS_BLUETOOTH == false && HAS_BLE == false
+char bt_devname[11];
+char bt_dh[16];
+#endif
+
 bool device_signatures_ok() {
   return dev_signature_validated && fw_signature_validated;
 }
@@ -279,9 +285,16 @@ bool device_firmware_ok() {
 
 #if MCU_VARIANT == MCU_ESP32 || MCU_VARIANT == MCU_NRF52 || MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040
 bool device_init() {
+  #if (MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040) && (HAS_BLUETOOTH == false && HAS_BLE == false)
+  // On RP boards without bluetooth board's uid is used instead of device hash.
+  pico_unique_board_id_t pico_id;
+  pico_get_unique_board_id(&pico_id);
+  memcpy(bt_dh+PICO_UNIQUE_BOARD_ID_SIZE_BYTES, pico_id.id, PICO_UNIQUE_BOARD_ID_SIZE_BYTES);
+  sprintf(bt_devname, "RNode %02X%02X", bt_dh[14], bt_dh[15]);
+  #endif
   #if VALIDATE_FIRMWARE
   // Not every RP board has a bluetooth module.
-  #if MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040 && (HAS_BLUETOOTH == 0 || HAS_BLE == 0)
+  #if (MCU_VARIANT == MCU_RP235X || MCU_VARIANT == MCU_RP2040) && (HAS_BLUETOOTH == false && HAS_BLE == false)
   if (1) {
   #else
   if (bt_ready) {
