@@ -16,7 +16,7 @@ You need to have picotool installed and be available in PATH to be able to uploa
 
 Prepare build environment:
 ```shell
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 make prep-rp2xxx
 ```
@@ -30,7 +30,7 @@ make upload-rp2040_lora
 > Pro tip:
 > you can specify (a compatible) rnodeconf to execute in make like this:
 > 
-> `make upload-pico2 RNODECONFEXE="python ~/Reticulum/RNS/Utilities/rnodeconf.py"`
+> `make upload-pico2 RNODECONFEXE="python3 ~/Reticulum/RNS/Utilities/rnodeconf.py"`
 
 Provision EEPROM:
 ```shell
@@ -68,7 +68,7 @@ You need to have picotool installed and be available in PATH to be able to uploa
 
 Prepare build environment:
 ```shell
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 # needed for rp2xxx_hash.py
 pip install elftools
@@ -85,7 +85,7 @@ make upload-pico2
 > Pro tip:
 > you can specify (a compatible) rnodeconf to execute in make like this:
 > 
-> `make upload-pico2 RNODECONFEXE="python ~/Reticulum/RNS/Utilities/rnodeconf.py"`
+> `make upload-pico2 RNODECONFEXE="python3 ~/Reticulum/RNS/Utilities/rnodeconf.py"`
 
 Provision EEPROM:
 ```shell
@@ -98,11 +98,11 @@ Set firmware hash by reflashing via make or:
 ```shell
 rnodeconf /dev/ttyACM0 -H $(sha256sum build/rp2040.rp2040.rpipico2/RNode_Firmware_CE.ino.bin | cut -d " " -f1) # Or manually provide a sha256 hash of a .bin file after -H
 # for pico w (with bluetooth):
-rnodeconf /dev/ttyACM0 -H $(python rp2xxx_hash.py build/rp2040.rp2040.rpipicow | tail -n 1)
+rnodeconf /dev/ttyACM0 -H $(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipicow | tail -n 1)
 ```
 
 ## Current RP-specific differences from upstream:
-- Device ID is pico unique ID (OTP CHIPID on RP235X, Flash UID on RP2040) instead of bluetooth MAC + sig hash.
+- Device ID is pico unique ID (OTP CHIPID on RP235X, Flash UID on RP2040) instead of bluetooth MAC + sig hash. (If built without bluetooth)
 - 10 Second button push resets device into usb boot (BOOTSEL) mode instead of weird esp-specific console thingy
 - For Pico W with Bluetooth the firmware hash is calculated differently via `rp2xxx_hash.py` (the verification algorithm avoids btstack's tlv storage sectors). For `rp2xxx_hash.py` you will need `elftools` pypi package
 
