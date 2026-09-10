@@ -147,8 +147,11 @@ void busyCallback(const void* p) { display_callback(); }
   #define DISP_CUSTOM_ADDR true
 #endif
 
-#if BOARD_MODEL == BOARD_GENERIC_RP2XXX
-  TwoWire OLEDWire(RP2XXX_I2C, SDA_OLED, SCL_OLED);
+#if PLATFORM == PLATFORM_RP2XXX && HAS_DISPLAY == true && DISPLAY == OLED
+#ifndef RP2XXX_OLED_I2C
+#error "RP2XXX_OLED_I2C is not defined for OLED on RP2! Add #define RP2XXX_OLED_I2C i2cN (with appropriate i2c instance identifier) to your board definition"
+#endif
+  TwoWire OLEDWire(RP2XXX_OLED_I2C, SDA_OLED, SCL_OLED);
 #endif
 
 #define SMALL_FONT &Org_01
@@ -177,7 +180,7 @@ uint32_t last_epd_full_refresh = 0;
 #define REFRESH_PERIOD 300000 // 5 minutes in ms
 #else
   #if DISPLAY == OLED
-  #if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+  #if PLATFORM == PLATFORM_RP2XXX
     Adafruit_SSD1306 display(DISP_W, DISP_H, &OLEDWire, DISP_RST);
   #else
     Adafruit_SSD1306 display(DISP_W, DISP_H, &Wire, DISP_RST);
@@ -395,7 +398,7 @@ bool display_init() {
       Wire.begin(SDA_OLED, SCL_OLED);
     #elif BOARD_VARIANT == MODEL_FD && BOARD_MODEL == BOARD_GENERIC_ESP32
       Wire.begin(SDA_OLED, SCL_OLED);
-    #elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
+    #elif PLATFORM == PLATFORM_RP2XXX && DISPLAY == OLED
       OLEDWire.begin();
     #endif
 

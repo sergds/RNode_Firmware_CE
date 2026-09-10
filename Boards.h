@@ -1511,7 +1511,7 @@
       #define DISPLAY OLED
       #define SDA_OLED 18
       #define SCL_OLED 19
-      #define RP2XXX_I2C i2c1
+      #define RP2XXX_OLED_I2C i2c1
       #define HAS_SLEEP true
       #define PIN_WAKEUP 12
       #define HAS_INPUT true
