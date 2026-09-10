@@ -1352,9 +1352,7 @@ void setTXPower(RadioInterface* radio, int txp) {
     if (model == MODEL_E3) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_E8) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
 
-    if (model == MODEL_FA) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FB) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
-    if (model == MODEL_FC) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FE) radio->setTxPower(txp, PA_OUTPUT_PA_BOOST_PIN);
     if (model == MODEL_FF) radio->setTxPower(txp, PA_OUTPUT_RFO_PIN);
 }
@@ -1583,7 +1581,7 @@ bool eeprom_product_valid() {
 	#elif PLATFORM == PLATFORM_NRF52
 	if (rval == PRODUCT_RAK4631 || rval == PRODUCT_HELTEC_T114 || rval == PRODUCT_OPENCOM_XL || rval == PRODUCT_TECHO || rval == PRODUCT_HMBRW) {
 	#elif PLATFORM == PLATFORM_RP2XXX
-	if (rval == BOARD_GENERIC_RP2XXX || rval == BOARD_RP2040_LORA || rval == PRODUCT_HMBRW) {
+	if (rval == BOARD_RP2040_LORA || rval == PRODUCT_HMBRW) {
 	#else
 	if (false) {
 	#endif
@@ -1645,8 +1643,6 @@ bool eeprom_model_valid() {
 	if (model == MODEL_FF || model == MODEL_FE) {
 	#elif BOARD_MODEL == BOARD_GENERIC_ESP32
 	if (model == MODEL_FF || model == MODEL_FE) {
-	#elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
-	if (model == MODEL_FC) {
 	#elif BOARD_MODEL == BOARD_RP2040_LORA
 	if (model == MODEL_FB) {
 	#else
