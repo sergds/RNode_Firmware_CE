@@ -1,0 +1,43 @@
+name: Nightly Build
+on:
+  push:
+    branches: [rp2xxx]
+jobs:
+  build:
+    runs-on: ubuntu-slim
+    steps:
+        - uses: actions/checkout@v4
+        - name: APT
+          run: |
+              export DEBIAN_FRONTEND=noninteractive && apt update -y && apt upgrade -y && apt install arduino-cli build-essential ca-certificates python3 python3-pip git nodejs -y
+        - name: prep-rp2xxx
+          run: |
+              make prep-rp2xxx
+        - name: Make artifact dir and set revision
+          run: |
+              mkdir artifacts
+              echo "GIT_SHORT_HASH=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+        - name: Build firmware-rp2040_lora
+          run: |
+              make clean firmware-rp2040_lora
+              cp build/RNode_Firmware_CE.ino.uf2 artifacts/rp2040_lora_$GIT_SHORT_HASH.uf2
+        - name: Build firmware-firmware-pico2
+          run: |
+              make clean firmware-pico2
+              cp build/RNode_Firmware_CE.ino.uf2 artifacts/pico2_$GIT_SHORT_HASH.uf2
+        - name: Build firmware-firmware-pico2w
+          run: |
+              make clean firmware-pico2w
+              cp build/RNode_Firmware_CE.ino.uf2 artifacts/pico2w_$GIT_SHORT_HASH.uf2
+        - name: Build firmware-firmware-picow
+          run: |
+              make clean firmware-picow
+              cp build/RNode_Firmware_CE.ino.uf2 artifacts/picow_$GIT_SHORT_HASH.uf2
+
+        - name: Upload artifacts
+          uses: actions/upload-artifact@v7
+          with:
+            name: nightly-uf2
+            path: ./artifacts/*.uf2
+        - name: Update release
+          run: gh release upload nightly artifacts/*.uf2 -R ${{github.repository}} --clobber
