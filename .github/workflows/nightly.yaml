@@ -48,4 +48,6 @@ jobs:
             name: nightly-uf2
             path: ./artifacts/*.uf2
         - name: Update release
+          env:
+            GH_TOKEN: ${{ secrets.GH_PAT }}
           run: gh release upload nightly artifacts/*.uf2 -R ${{github.repository}} --clobber
