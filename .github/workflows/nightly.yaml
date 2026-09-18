@@ -9,10 +9,13 @@ jobs:
         - uses: actions/checkout@v4
         - name: Essential deps
           run: |
-              export DEBIAN_FRONTEND=noninteractive && sudo apt update -y && sudo apt install build-essential ca-certificates python3 python3-pip git nodejs curl -y
-              curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sudo sh
+              mkdir -p ~/local/bin
+              export PATH=$PATH:~/local/bin
+              export DEBIAN_FRONTEND=noninteractive && apt update -y && apt install build-essential ca-certificates python3 python3-pip git nodejs curl -y
+              curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/local/bin sh
         - name: prep-rp2xxx
           run: |
+              export PATH=$PATH:~/local/bin
               make prep-rp2xxx
         - name: Make artifact dir and set revision
           run: |
@@ -20,18 +23,22 @@ jobs:
               echo "GIT_SHORT_HASH=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
         - name: Build firmware-rp2040_lora
           run: |
+              export PATH=$PATH:~/local/bin
               make clean firmware-rp2040_lora
               cp build/RNode_Firmware_CE.ino.uf2 artifacts/rp2040_lora_$GIT_SHORT_HASH.uf2
-        - name: Build firmware-firmware-pico2
+        - name: Build firmware-pico2
           run: |
+              export PATH=$PATH:~/local/bin
               make clean firmware-pico2
               cp build/RNode_Firmware_CE.ino.uf2 artifacts/pico2_$GIT_SHORT_HASH.uf2
-        - name: Build firmware-firmware-pico2w
+        - name: Build firmware-pico2w
           run: |
+              export PATH=$PATH:~/local/bin
               make clean firmware-pico2w
               cp build/RNode_Firmware_CE.ino.uf2 artifacts/pico2w_$GIT_SHORT_HASH.uf2
-        - name: Build firmware-firmware-picow
+        - name: Build firmware-picow
           run: |
+              export PATH=$PATH:~/local/bin
               make clean firmware-picow
               cp build/RNode_Firmware_CE.ino.uf2 artifacts/picow_$GIT_SHORT_HASH.uf2
 
