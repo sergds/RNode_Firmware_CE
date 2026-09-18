@@ -7,9 +7,10 @@ jobs:
     runs-on: ubuntu-slim
     steps:
         - uses: actions/checkout@v4
-        - name: APT
+        - name: Essential deps
           run: |
-              export DEBIAN_FRONTEND=noninteractive && sudo apt update -y && sudo apt install arduino-cli build-essential ca-certificates python3 python3-pip git nodejs -y
+              export DEBIAN_FRONTEND=noninteractive && sudo apt update -y && sudo apt install build-essential ca-certificates python3 python3-pip git nodejs curl -y
+              curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sudo sh
         - name: prep-rp2xxx
           run: |
               make prep-rp2xxx
