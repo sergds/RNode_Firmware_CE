@@ -11,7 +11,7 @@ jobs:
           run: |
               mkdir -p ~/local/bin
               export PATH=$PATH:~/local/bin
-              export DEBIAN_FRONTEND=noninteractive && apt update -y && apt install build-essential ca-certificates python3 python3-pip git nodejs curl -y
+              export DEBIAN_FRONTEND=noninteractive && sudo apt update -y && sudo apt install build-essential ca-certificates python3 python3-pip python3-pyelftools git nodejs curl zip -y
               curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/local/bin sh
         - name: prep-rp2xxx
           run: |
@@ -19,35 +19,54 @@ jobs:
               make prep-rp2xxx
         - name: Make artifact dir and set revision
           run: |
-              mkdir artifacts
+              mkdir -p artifacts
               echo "GIT_SHORT_HASH=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
         - name: Build firmware-rp2040_lora
           run: |
+              export BOARD=rp2040_lora
+              mkdir -p $BOARD
               export PATH=$PATH:~/local/bin
-              make clean firmware-rp2040_lora
-              cp build/RNode_Firmware_CE.ino.uf2 artifacts/rp2040_lora_$GIT_SHORT_HASH.uf2
+              make clean firmware-$BOARD
+              cp build/RNode_Firmware_CE.ino.uf2 $BOARD/RNode_CE_$BOARD_$GIT_SHORT_HASH.uf2
+              python3 rp2xxx_hash.py build | cut -d " " -f1 > $BOARD/RNode_CE_$BOARD_$GIT_SHORT_HASH.uf2.sha256
+              zip -r artifacts/RNode_CE_$BOARD_$GIT_SHORT_HASH.zip $BOARD
+              rm -rf $BOARD
         - name: Build firmware-pico2
           run: |
+              export BOARD=pico2
+              mkdir -p $BOARD
               export PATH=$PATH:~/local/bin
-              make clean firmware-pico2
-              cp build/RNode_Firmware_CE.ino.uf2 artifacts/pico2_$GIT_SHORT_HASH.uf2
+              make clean firmware-$BOARD
+              cp build/RNode_Firmware_CE.ino.uf2 $BOARD/RNode_CE_$BOARD_$GIT_SHORT_HASH.uf2
+              python3 rp2xxx_hash.py build | tail -n 1 > $BOARD/RNode_CE_$BOARD_$GIT_SHORT_HASH.uf2.sha256
+              zip -r artifacts/RNode_CE_$BOARD_$GIT_SHORT_HASH.zip $BOARD
+              rm -rf $BOARD
         - name: Build firmware-pico2w
           run: |
+              export BOARD=pico2w
+              mkdir -p $BOARD
               export PATH=$PATH:~/local/bin
-              make clean firmware-pico2w
-              cp build/RNode_Firmware_CE.ino.uf2 artifacts/pico2w_$GIT_SHORT_HASH.uf2
+              make clean firmware-$BOARD
+              cp build/RNode_Firmware_CE.ino.uf2 $BOARD/RNode_CE_$BOARD_$GIT_SHORT_HASH.uf2
+              python3 rp2xxx_hash.py build | tail -n 1 > $BOARD/RNode_CE_$BOARD_$GIT_SHORT_HASH.uf2.sha256
+              zip -r artifacts/RNode_CE_$BOARD_$GIT_SHORT_HASH.zip $BOARD
+              rm -rf $BOARD
         - name: Build firmware-picow
           run: |
+              export BOARD=picow
+              mkdir -p $BOARD
               export PATH=$PATH:~/local/bin
-              make clean firmware-picow
-              cp build/RNode_Firmware_CE.ino.uf2 artifacts/picow_$GIT_SHORT_HASH.uf2
-
+              make clean firmware-$BOARD
+              cp build/RNode_Firmware_CE.ino.uf2 $BOARD/RNode_CE_$BOARD_$GIT_SHORT_HASH.uf2
+              python3 rp2xxx_hash.py build | tail -n 1 > $BOARD/RNode_CE_$BOARD_$GIT_SHORT_HASH.uf2.sha256
+              zip -r artifacts/RNode_CE_$BOARD_$GIT_SHORT_HASH.zip $BOARD
+              rm -rf $BOARD
         - name: Upload artifacts
           uses: actions/upload-artifact@v7
           with:
             name: nightly-uf2
-            path: ./artifacts/*.uf2
+            path: ./artifacts/*
         - name: Update release
           env:
             GH_TOKEN: ${{ secrets.GH_PAT }}
-          run: gh release upload nightly artifacts/*.uf2 -R ${{github.repository}} --clobber
+          run: gh release upload nightly artifacts/* -R ${{github.repository}} --clobber
