@@ -391,19 +391,19 @@ int sx126x::begin()
   calibrate_image(_frequency);
 
   enableTCXO();
-  standby();
-  uint8_t deverr;
-  executeOpcodeRead(OP_GET_DEVICE_ERRORS_6X, &deverr, 1);
-  if (deverr & 0b00100000) {
-    // Failed to start TCXO, falling back to XTAL.
-    executeOpcodeRead(OP_CLEAR_DEVICE_ERRORS_6X, &deverr, 1);
-    reset();
-    waitOnBusy();
-    calibrate();
-    calibrate_image(_frequency);
-    _tcxo = false;
-    standby();
-  }
+  // standby();
+  // uint8_t deverr;
+  // executeOpcodeRead(OP_GET_DEVICE_ERRORS_6X, &deverr, 1);
+  // if (deverr & 0b00100000) {
+  //   // Failed to start TCXO, falling back to XTAL.
+  //   executeOpcodeRead(OP_CLEAR_DEVICE_ERRORS_6X, &deverr, 1);
+  //   reset();
+  //   waitOnBusy();
+  //   calibrate();
+  //   calibrate_image(_frequency);
+  //   _tcxo = false;
+  //   standby();
+  // }
 
   loraMode();
   standby();
