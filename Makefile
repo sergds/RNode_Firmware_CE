@@ -163,7 +163,7 @@ firmware-genericesp32: check_bt_buffers
 	arduino-cli compile --fqbn esp32:esp32:esp32 $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x35\""
 
 firmware-rp2040_lora:
-	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "build.f_cpu=200000000L" --build-property "build.usb_product=\"RP2040-LoRa RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x66\" \"-DBOARD_VARIANT=0xFB\""
+	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "build.f_cpu=100000000L" --build-property "build.usb_product=\"RP2040-LoRa RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x66\" \"-DBOARD_VARIANT=0xFB\""
 
 firmware-rak4631:
 	arduino-cli compile --fqbn rakwireless:nrf52:WisCoreRAK4631Board $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x51\" \"-DBOARD_VARIANT=0x12\""
