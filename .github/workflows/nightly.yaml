@@ -7,9 +7,6 @@ jobs:
     runs-on: ubuntu-slim
     steps:
         - uses: actions/checkout@v4
-          with:
-            repository: 'sergds/RNode_Firmware_CE'
-            ref: 'rp2xxx'
         - name: Essential deps
           run: |
               mkdir -p ~/local/bin
