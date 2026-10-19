@@ -199,7 +199,7 @@ firmware-pico2w:
 	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico2w $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) $(RP235X_RISCV_BUILD_FLAGS) --build-property "build.f_cpu=200000000L" --build-property "build.usb_product=\"Pico 2W RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x65\" \"-DBOARD_VARIANT=0xFA\" \"$(DEBUGFLAG)\"" --build-property "build.libpicow=liblwip-bt.a" --build-property "build.libpicowdefs=\"-DLWIP_IPV6=0\" \"-DLWIP_IPV4=1\" \"-DENABLE_CLASSIC=1\" \"-DENABLE_BLE=1\" \"-DCYW43_ENABLE_BLUETOOTH=1\" \"-D__LWIP_MEMMULT=2\"" $(COREDEBUGFLAG)
 
 firmware-rp2040_lora:
-	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "build.f_cpu=200000000L" --build-property "build.usb_product=\"RP2040-LoRa RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x66\" \"-DBOARD_VARIANT=0xFB\" $(DEBUGFLAG)" $(COREDEBUGFLAG)
+	arduino-cli compile --config-file arduino-cli.yaml --build-path "build" --fqbn rp2040:rp2040:rpipico $(COMMON_BUILD_FLAGS) $(COMMON_RP2XXX_BUILD_FLAGS) --build-property "build.f_cpu=100000000L" --build-property "build.usb_product=\"RP2040-LoRa RNode\"" --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x66\" \"-DBOARD_VARIANT=0xFB\" $(DEBUGFLAG)" $(COREDEBUGFLAG)
 
 firmware-rak4631:
 	arduino-cli compile --fqbn rakwireless:nrf52:WisCoreRAK4631Board $(COMMON_BUILD_FLAGS) --build-property "compiler.cpp.extra_flags=\"-DBOARD_MODEL=0x51\" \"-DBOARD_VARIANT=0x12\""
