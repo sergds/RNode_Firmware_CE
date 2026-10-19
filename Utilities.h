@@ -15,6 +15,7 @@
 
 #ifdef ARDUINO_ARCH_RP2040
 #include "RP2040Support.h"
+#include "src/rp2xxx/CPUTemperature.h"
 #include "pico/bootrom.h"
 #if CYW43_ENABLE_BLUETOOTH
 #include "pico/cyw43_arch.h"
@@ -1108,6 +1109,18 @@ void kiss_indicate_battery() {
 		escaped_serial_write(battery_state);
 		escaped_serial_write((uint8_t)int(battery_percent));
 		serial_write(FEND);
+}
+
+void kiss_indicate_temperature() {
+#if PLATFORM == PLATFORM_RP2XXX
+	if (temp_measurement_ready) {
+		uint8_t temp = (uint8_t)(last_temp+TEMP_OFFSET);
+		serial_write(FEND);
+		serial_write(CMD_STAT_TEMP);
+		escaped_serial_write(temp);
+		serial_write(FEND);
+	}
+#endif
 }
 
 void kiss_indicate_btpin() {

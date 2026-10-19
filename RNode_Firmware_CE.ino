@@ -209,6 +209,10 @@ void setup() {
 
   Serial.begin(serial_baudrate);
 
+  #if PLATFORM == PLATFORM_RP2XXX
+    temp_measurement_init();
+  #endif
+
   #if HAS_NP
     led_init();
   #endif
@@ -1737,6 +1741,15 @@ void loop() {
     }
   #endif
 
+  #if PLATFORM == PLATFORM_RP2XXX
+    if (temp_measurement_ready) {
+      temp_measurement_update();
+      if (millis()-last_temp_indication_ms >= temp_indication_interval_ms) {
+        kiss_indicate_temperature();
+        last_temp_indication_ms = millis();
+      }
+    }
+  #endif
   if (memory_low) {
     #if PLATFORM == PLATFORM_ESP32
       if (esp_get_free_heap_size() < 8192) {
