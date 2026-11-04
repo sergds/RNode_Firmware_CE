@@ -349,12 +349,12 @@ upload-pico2:
 upload-picow:
 	picotool load -fxv build/rp2040.rp2040.rpipicow/RNode_Firmware_CE.ino.uf2
 	@sleep 1.5
-	$(RNODECONFEXE) /dev/ttyACM0 -H $$(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipicow | tail -n 1)
+	$(RNODECONFEXE) /dev/ttyACM0 -H $$(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipicow)
 
 upload-pico2w:
 	picotool load -fxv build/rp2040.rp2040.rpipico2w/RNode_Firmware_CE.ino.uf2
 	@sleep 1.5
-	$(RNODECONFEXE) /dev/ttyACM0 -H $$(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipico2w | tail -n 1)
+	$(RNODECONFEXE) /dev/ttyACM0 -H $$(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipico2w)
 
 upload-rp2040_lora:
 	picotool load -fxv build/rp2040.rp2040.rpipico/RNode_Firmware_CE.ino.uf2

@@ -7,6 +7,7 @@ import sys
 import os
 import hashlib
 from elftools.elf.elffile import ELFFile 
+import sys
 
 CHUNK_SIZE = 512
 FLASH_BASE = 0x10000000
@@ -27,15 +28,15 @@ with open(elf_path, "rb") as elffile:
     symtab = elf.get_section_by_name(".symtab")
     for sym in symtab.iter_symbols():
         if "cyw43" in sym.name and not hasBtstack:
-            print("This binary has CYW43 driver, enabling TLV bypass")
+            sys.stderr.write("This binary has CYW43 driver, enabling TLV bypass\n")
             hasBtstack = True
         if "__bluetooth_tlv" in sym.name:
             tlv_base = sym.entry["st_value"]
-            print(f"Found BTstack TLV: base={hex(tlv_base)}, symbol={sym.name}, .bin offset={hex(tlv_base - 0x10000000)}")
+            sys.stderr.write(f"Found BTstack TLV: base={hex(tlv_base)}, symbol={sym.name}, .bin offset={hex(tlv_base - 0x10000000)}\n")
             tlv_base = tlv_base - FLASH_BASE
 
 if tlv_base == 0 and hasBtstack:
-    print("Failed to find BTstack TLV storage base address! Did something change significantly?")
+    sys.stderr.write("Failed to find BTstack TLV storage base address! Did something change significantly?\n")
     exit(1)
 
 with open(bin_path, "rb") as f:
@@ -51,7 +52,7 @@ with open(bin_path, "rb") as f:
             break
         if f.tell() == tlv_base and hasBtstack:
             skip = int((2 * 4096) / CHUNK_SIZE)
-            print(f"skipping {skip} chunks from {hex(f.tell())} to {hex(f.tell() + CHUNK_SIZE*skip)}")
+            sys.stderr.write(f"skipping {skip} chunks from {hex(f.tell())} to {hex(f.tell() + CHUNK_SIZE*skip)}\n")
         hash.update(chunk)
     
     print(hash.hexdigest())
