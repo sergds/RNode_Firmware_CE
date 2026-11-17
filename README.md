@@ -1,7 +1,7 @@
 # Raspberry Pi RP MCU port
 Experimental port for pico chip family based on my personal branch with adapted LR1121 driver by Ben Agricola + subjective changes.
 
-Compatible RNodeInterface and rnodeconf are available [HERE](https://forge.sergds.xyz/sergds/Reticulum/src/branch/rp2xxx)
+Compatible rnodeconf is available [HERE](https://github.com/sergds/Reticulum) on the rp2xxx branch.
 
 ## Implemented boards:
 ### BOARD_RP2040_LORA (Waveshare RP2040-LoRa)
