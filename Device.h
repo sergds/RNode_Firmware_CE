@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <Ed25519.h>
+#include <strings.h>
 
 #if MCU_VARIANT == MCU_ESP32
 #include "mbedtls/md.h"
@@ -240,15 +241,16 @@ void device_validate_partitions() {
     if (skip > 0) {
       // Serial.printf("^^SKIPPED^^\r\n");
       skip -= 1;
-      flash += (uintptr_t)size;
-      continue;
+      // feed hashes zeroes
+      goto hashit;
     }
     memcpy(chunk, flash, size);
     if (strcmp((char*)chunk, "BTstack") == 0) { // btstack link keys tlv header
-      skip = (2 * 4096) / CHUNK_SIZE; // skip 16 chunks (2 flash sectors) if we encounter a btstack TLV storage, thankfuly it's aligned to sector size 
+      skip = (2 * 4096) / CHUNK_SIZE; // skip 16 chunks (2 flash sectors) if we encounter a btstack TLV storage, thankfuly it's aligned to sector size
+      memset(chunk, 0, CHUNK_SIZE);
       continue;
     }
-
+hashit:
     #if MCU_VARIANT == MCU_RP2040
       sha.update(chunk, size);
     #else
