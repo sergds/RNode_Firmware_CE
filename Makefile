@@ -303,7 +303,7 @@ upload-techo:
 upload-rp2040_lora:
 	picotool load -fxv build/rp2040.rp2040.rpipico/RNode_Firmware_CE.ino.uf2
 	@sleep 1.5
-	rnodeconf /dev/ttyACM0 -H $$(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipico | tail -n 1)
+	rnodeconf /dev/ttyACM0 -H $$(sha256sum build/rp2040.rp2040.rpipico/RNode_Firmware_CE.ino.bin | cut -d ' ' -f 1)
 
 release:  console-site spiffs-image $(shell grep ^release- Makefile | cut -d: -f1)
 
