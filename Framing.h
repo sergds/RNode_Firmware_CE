@@ -81,7 +81,6 @@
   #define CMD_UNLOCK_ROM  0x59
   #define ROM_UNLOCK_BYTE 0xF8
   #define CMD_RESET       0x55
-  #define CMD_RESET_BOOT  0x5F
   #define CMD_RESET_BYTE  0xF8
 
   #define CMD_INTERFACES  0x77

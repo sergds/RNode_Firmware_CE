@@ -28,6 +28,7 @@
 #include "hardware/clocks.h"
 #include "hardware/pll.h"
 #include "pico/runtime_init.h"
+#include "pico/bootrom.h"
 #endif
 
 #if MCU_VARIANT == MCU_NRF52
@@ -1168,12 +1169,7 @@ void serial_callback(uint8_t sbyte) {
       if (sbyte == CMD_RESET_BYTE) {
         hard_reset();
       }
-    } else if (command == CMD_RESET_BOOT) {
-      if (sbyte == CMD_RESET_BYTE) { // TODO: reusing second byte (for now?)
-        reset_to_bootloader();
-      }
-    }
-    else if (command == CMD_ROM_READ) {
+    } else if (command == CMD_ROM_READ) {
       kiss_dump_eeprom();
     } else if (command == CMD_ROM_WRITE) {
       if (sbyte == FESC) {
@@ -1877,7 +1873,7 @@ void button_event(uint8_t event, unsigned long duration) {
           #if HAS_BLUETOOTH || HAS_BLE == true
             bt_stop();
           #endif
-          reset_to_bootloader();
+          rom_reset_usb_boot(0, 0);
         #endif
       } else if (duration > 5000) {
         #if HAS_BLUETOOTH || HAS_BLE

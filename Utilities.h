@@ -16,7 +16,6 @@
 #ifdef ARDUINO_ARCH_RP2040
 #include "RP2040Support.h"
 #include "src/rp2xxx/CPUTemperature.h"
-#include "pico/bootrom.h"
 #if CYW43_ENABLE_BLUETOOTH
 #include "pico/cyw43_arch.h"
 #endif
@@ -416,15 +415,6 @@ void hard_reset(void) {
 	#elif MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
 	rp2040.reboot();
 	#endif
-}
-
-void reset_to_bootloader(void) {
-#if HAS_DISPLAY
-	update_display(true);
-#endif
-#if MCU_VARIANT == MCU_RP2040 || MCU_VARIANT == MCU_RP235X
-	rom_reset_usb_boot(0, 0);
-#endif
 }
 
 // LED Indication: Error
