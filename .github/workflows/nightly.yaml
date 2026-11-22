@@ -28,6 +28,7 @@ jobs:
               export PATH=$PATH:~/local/bin
               make clean firmware-$BOARD
               cp build/RNode_Firmware_CE.ino.uf2 $BOARD/RNode_CE_$BOARD\_$GIT_SHORT_HASH\.uf2
+              sha256sum build/rp2040.rp2040.rpipico/RNode_Firmware_CE.ino.bin | cut -d ' ' -f 1 > $BOARD/RNode_CE_$BOARD\_$GIT_SHORT_HASH\.uf2.sha256
               zip -r artifacts/RNode_CE_$BOARD\.zip $BOARD
               rm -rf $BOARD
         - name: Upload artifacts
