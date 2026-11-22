@@ -70,8 +70,6 @@ Prepare build environment:
 ```shell
 python3 -m venv .venv
 source .venv/bin/activate
-# needed for rp2xxx_hash.py
-pip install elftools
 make prep-rp2xxx
 ```
 
@@ -98,13 +96,12 @@ Set firmware hash by reflashing via make or:
 ```shell
 rnodeconf /dev/ttyACM0 -H $(sha256sum build/rp2040.rp2040.rpipico2/RNode_Firmware_CE.ino.bin | cut -d " " -f1) # Or manually provide a sha256 hash of a .bin file after -H
 # for pico w (with bluetooth):
-rnodeconf /dev/ttyACM0 -H $(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipicow | tail -n 1)
+rnodeconf /dev/ttyACM0 -H $(sha256sum build/rp2040.rp2040.rpipicow/RNode_Firmware_CE.ino.bin | cut -d " " -f1)
 ```
 
 ## Current RP-specific differences from upstream:
 - Device ID is pico unique ID (OTP CHIPID on RP235X, Flash UID on RP2040) instead of bluetooth MAC + sig hash. (If built without bluetooth)
 - 10 Second button push resets device into usb boot (BOOTSEL) mode instead of weird esp-specific console thingy
-- For Pico W with Bluetooth the firmware hash is calculated differently via `rp2xxx_hash.py` (the verification algorithm avoids btstack's tlv storage sectors). For `rp2xxx_hash.py` you will need `elftools` pypi package
 
 ## Current chip support:
 ### RP235X: Both ARM and RISC-V modes work, tested

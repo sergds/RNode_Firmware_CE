@@ -68,7 +68,6 @@ prep-rp2xxx:
 	arduino-cli lib install "XPowersLib"
 	arduino-cli lib install "Crypto"
 	pip install pyserial rns --upgrade --user --break-system-packages # This looks scary, but it's actually just telling pip to install packages as a user instead of trying to install them systemwide, which bypasses the "externally managed environment" error.
-	pip install pyelftools --upgrade --user --break-system-packages # This looks scary, but it's actually just telling pip to install packages as a user instead of trying to install them systemwide, which bypasses the "externally managed environment" error.
 
 prep-esp32:
 	arduino-cli core install esp32:esp32@$(ARDUINO_ESP_CORE_VER) --config-file arduino-cli.yaml
@@ -349,12 +348,12 @@ upload-pico2:
 upload-picow:
 	picotool load -fxv build/rp2040.rp2040.rpipicow/RNode_Firmware_CE.ino.uf2
 	@sleep 1.5
-	$(RNODECONFEXE) /dev/ttyACM0 -H $$(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipicow)
+	$(RNODECONFEXE) /dev/ttyACM0 -H $$(sha256sum build/rp2040.rp2040.rpipicow/RNode_Firmware_CE.ino.bin | cut -d " " -f1)
 
 upload-pico2w:
 	picotool load -fxv build/rp2040.rp2040.rpipico2w/RNode_Firmware_CE.ino.uf2
 	@sleep 1.5
-	$(RNODECONFEXE) /dev/ttyACM0 -H $$(python3 rp2xxx_hash.py build/rp2040.rp2040.rpipico2w)
+	$(RNODECONFEXE) /dev/ttyACM0 -H $$(sha256sum build/rp2040.rp2040.rpipico2w/RNode_Firmware_CE.ino.bin | cut -d " " -f1)
 
 upload-rp2040_lora:
 	picotool load -fxv build/rp2040.rp2040.rpipico/RNode_Firmware_CE.ino.uf2
