@@ -1584,7 +1584,7 @@ bool eeprom_product_valid() {
 	#elif PLATFORM == PLATFORM_NRF52
 	if (rval == PRODUCT_RAK4631 || rval == PRODUCT_HELTEC_T114 || rval == PRODUCT_OPENCOM_XL || rval == PRODUCT_TECHO || rval == PRODUCT_HMBRW) {
 	#elif PLATFORM == PLATFORM_RP2XXX
-	if (rval == BOARD_RP2040_LORA || rval == PRODUCT_HMBRW) {
+	if (rval == PRODUCT_RP2040_LORA || rval == PRODUCT_HMBRW) {
 	#else
 	if (false) {
 	#endif

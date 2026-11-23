@@ -136,7 +136,8 @@
   #define BOARD_HUZZAH32      0x34
   #define BOARD_GENERIC_ESP32 0x35
   #define BOARD_GENERIC_NRF52 0x50
-  #define BOARD_RP2040_LORA 0x66 // Waveshare RP2040-LoRa, https://www.waveshare.com/wiki/RP2040-LoRa
+  #define PRODUCT_RP2040_LORA 0xF1 // Waveshare RP2040-LoRa, https://www.waveshare.com/wiki/RP2040-LoRa
+  #define BOARD_RP2040_LORA 0x66
   #define MODEL_FB            0xFB // Waveshare RP2040-LoRa, RP2040, SX1262
   #define MODEL_FE            0xFE // Homebrew board, max 17dBm output power
   #define MODEL_FF            0xFF // Homebrew board, max 14dBm output power
