@@ -137,10 +137,10 @@
   #define BOARD_HUZZAH32      0x34
   #define BOARD_GENERIC_ESP32 0x35
   #define BOARD_GENERIC_NRF52 0x50
-  #define BOARD_GENERIC_RP2XXX 0x65
-  #define BOARD_RP2040_LORA 0x66 // Waveshare RP2040-LoRa, https://www.waveshare.com/wiki/RP2040-LoRa
-  #define MODEL_FA            0xFA // Homebrew board, Raspbery Pi Pico W, BLE, RP2040, LR1121
+  #define PRODUCT_RP2040_LORA 0xF1 // Waveshare RP2040-LoRa, https://www.waveshare.com/wiki/RP2040-LoRa
+  #define BOARD_RP2040_LORA 0x66
   #define MODEL_FB            0xFB // Waveshare RP2040-LoRa, RP2040, SX1262
+  #define MODEL_FA            0xFA // Homebrew board, Raspbery Pi Pico W, BLE, RP2040, LR1121
   #define MODEL_FC            0xFC // Homebrew board, Raspbery Pi Pico 2, RP2350, LR1121
   #define MODEL_FE            0xFE // Homebrew board, max 17dBm output power
   #define MODEL_FD            0xFD // Homebrew board, Tseryobla3000, ESP32-C3, SX1262
@@ -1505,7 +1505,7 @@
     #define HAS_EEPROM true
 
 
-    #if BOARD_MODEL == BOARD_GENERIC_RP2XXX
+    #if BOARD_MODEL == BOARD_HMBRW
       #define INTERFACE_COUNT 1
       #define HAS_DISPLAY true
       #define DISPLAY OLED

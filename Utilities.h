@@ -1610,7 +1610,7 @@ bool eeprom_product_valid() {
 	#elif PLATFORM == PLATFORM_NRF52
 	if (rval == PRODUCT_RAK4631 || rval == PRODUCT_HELTEC_T114 || rval == PRODUCT_OPENCOM_XL || rval == PRODUCT_TECHO || rval == PRODUCT_HMBRW) {
 	#elif PLATFORM == PLATFORM_RP2XXX
-	if (rval == BOARD_GENERIC_RP2XXX || rval == BOARD_RP2040_LORA || rval == PRODUCT_HMBRW) {
+	if (rval == PRODUCT_RP2040_LORA || rval == PRODUCT_HMBRW) {
 	#else
 	if (false) {
 	#endif
@@ -1635,7 +1635,7 @@ bool eeprom_model_valid() {
 	#elif BOARD_MODEL == BOARD_T3S3
 	if (model == MODEL_A1 || model == MODEL_A6 || model == MODEL_A5 || model == MODEL_AA || model == MODEL_AC || model == MODEL_AD) {
 	#elif BOARD_MODEL == BOARD_HMBRW
-	if (model == MODEL_FF || model == MODEL_FE) {
+	if (model == MODEL_FF || model == MODEL_FE || model == MODEL_FC || model == MODEL_FA) {
 	#elif BOARD_MODEL == BOARD_TBEAM
 	if (model == MODEL_E4 || model == MODEL_E9 || model == MODEL_E3 || model == MODEL_E8) {
 	#elif BOARD_MODEL == BOARD_TDECK
@@ -1668,12 +1668,8 @@ bool eeprom_model_valid() {
 	if (model == MODEL_FF) {
 	#elif BOARD_MODEL == BOARD_E22_ESP32
 	if (model == MODEL_FF || model == MODEL_FE) {
-	#elif BOARD_MODEL == BOARD_HMBRW
-	if (model == MODEL_FF || model == MODEL_FE) {
 	#elif BOARD_MODEL == BOARD_GENERIC_ESP32
 	if (model == MODEL_FF || model == MODEL_FD || model == MODEL_FE) {
-	#elif BOARD_MODEL == BOARD_GENERIC_RP2XXX
-	if (model == MODEL_FC || model == MODEL_FA) {
 	#elif BOARD_MODEL == BOARD_RP2040_LORA
 	if (model == MODEL_FB) {
 	#else

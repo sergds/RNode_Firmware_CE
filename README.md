@@ -34,10 +34,10 @@ make upload-rp2040_lora
 
 Provision EEPROM:
 ```shell
-rnodeconf /dev/ttyACM0 -r --platform 60 --product 66 --model fb --hwrev 01
+rnodeconf /dev/ttyACM0 -r --platform 60 --product f1 --model fb --hwrev 01
 ```
 
-### BOARD_GENERIC_RP2XXX (Generic RP2XXX Board)
+### BOARD_HMBRW (Generic RP2XXX Board)
 A generic Pico-based DIY RNode. 1 radio interface, LR1121 modem. i2c1 is dedicated to OLED. Served as a bringup board for this project.
 
 Can be a `pico2` or `picow`/`pico2w` if you have Pico W and want bluetooth (BLE Enabled by default, BT Classic can be enabled in Boards.h instead of BLE).
@@ -87,9 +87,9 @@ make upload-pico2
 
 Provision EEPROM:
 ```shell
-rnodeconf /dev/ttyACM0 -r --platform 60 --product 65 --model fc --hwrev 01
+rnodeconf /dev/ttyACM0 -r --platform 60 --product f0 --model fc --hwrev 01
 #for pico w (model is different):
-rnodeconf /dev/ttyACM0 -r --platform 60 --product 65 --model fa --hwrev 01
+rnodeconf /dev/ttyACM0 -r --platform 60 --product f0 --model fa --hwrev 01
 ```
 
 Set firmware hash by reflashing via make or:
